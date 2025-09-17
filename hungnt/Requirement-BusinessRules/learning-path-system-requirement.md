@@ -65,6 +65,20 @@ image, title, difficulty_level, active status
 - **Pagination:** Phân trang cho danh sách readings
 - **Single Query:** Tất cả tham số chung 1 query
 
+### UI: Filter Độ Khó Theo Lộ Trình Hiện Tại
+- **Khi vào màn hình chọn readings, category, hoặc words:**
+  - UI sẽ tự động lấy giá trị `difficulty_level` của lộ trình hiện tại (ví dụ: 3)
+  - Giá trị filter độ khó mặc định sẽ được set là 3
+  - Danh sách readings, categories, words sẽ được filter với độ khó = 3 (tức chỉ hiển thị các item có difficulty/level = 3)
+  - Người dùng (admin) có thể thay đổi giá trị filter này sang mức khác nếu muốn (ví dụ chuyển sang 2 hoặc 4)
+- **Ví dụ:**
+  ```
+  Lộ trình có difficulty_level = 3:
+  - UI filter mặc định: độ khó = 3
+  - Danh sách chỉ hiển thị readings, categories, words có difficulty/level = 3
+  - Admin có thể sửa filter sang 2 hoặc 4 để xem danh sách tương ứng
+  ```
+
 ### Hiển thị trạng thái readings
 - **Reading chưa có trong lộ trình nào:** màu bình thường
 - **Reading đã có trong lộ trình khác:** màu khác + thông báo thuộc lộ trình nào
@@ -222,9 +236,14 @@ INDEX: (game_id, sequence_order) - Tối ưu query
 
 #### 3. Gán từ vào game (Admin)
 - Hiển thị danh sách từ với search/filter
+- **Auto-filter theo difficulty:** Tự động filter từ vựng có `level <= learning_path.difficulty_level` của lộ trình chứa game
 - Thêm/xóa từ khỏi game với sequence_order
 - Hiển thị từ vựng trong game theo thứ tự
 - Drag & drop sắp xếp thứ tự từ
+- **Logic filter từ vựng:**
+  - Lấy `difficulty_level` từ learning path chứa game hiện tại
+  - Chỉ hiển thị words có `level = difficulty_level`
+  - Admin có thể override filter nếu cần thiết
 
 #### 4. Validation rules
 - Word không trống, unique
@@ -314,6 +333,54 @@ Student click vào game → trả về chi tiết game với từ vựng
 - **Error handling:** Chuẩn với proper HTTP status codes
 - **Pagination:** Với total_record, total_page, records
 - **Security:** Input sanitization và file validation
+
+### Logic Filtering Tự Động Theo Difficulty Level
+
+#### 1. Endpoint: POST /admin/learning-paths/:pathId/available-readings
+```javascript
+// Tự động áp dụng filter difficulty khi lấy readings cho lộ trình
+async function getAvailableReadings(req, res) {
+  const learningPath = await LearningPath.findByPk(pathId);
+  const maxDifficulty = learningPath.difficulty_level;
+  
+  // Auto-apply difficulty filter
+  const whereClause = {
+    // Đổi toán tử so sánh thành bằng (=) maxDifficulty
+    difficulty_level: maxDifficulty
+  };
+  
+  // Admin vẫn có thể override bằng cách pass difficulty_level trong request
+  if (req.body.difficulty_level !== undefined) {
+    whereClause.difficulty_level = req.body.difficulty_level;
+  }
+}
+```
+
+#### 2. Endpoint: GET /admin/games/:gameId/available-words
+```javascript
+// Tự động filter từ vựng theo difficulty của lộ trình chứa game
+async function getAvailableWords(req, res) {
+  const game = await Game.findByPk(gameId, {
+    include: [{
+      model: LearningPathItem,
+      include: [{ model: LearningPath }]
+    }]
+  });
+  
+  const maxLevel = game.learningPathItem.learningPath.difficulty_level;
+  
+  const whereClause = {
+    difficulty_level: maxDifficulty
+    is_active: 1
+  };
+}
+```
+
+#### 3. Business Rules cho Difficulty Filtering
+- **Default behavior:** Luôn áp dụng auto-filter theo difficulty của lộ trình
+- **Override capability:** Admin có thể override bằng cách specify difficulty_level/level trong request
+- **Validation:** Không được phép thêm item có difficulty cao hơn lộ trình
+- **Warning system:** Hiển thị cảnh báo nếu admin cố gắng thêm item khó hơn lộ trình
 
 ---
 
