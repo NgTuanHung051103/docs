@@ -3,57 +3,57 @@
 ## Use Case Details
 
 ### Primary Actors
-Admin
+Teacher
 
 ### Secondary Actors
 None
 
 ### Trigger
-The Admin clicks on the "Create New" button in the Learning Paths Management screen.
+The Teacher clicks on the "Create New" button in the Learning Paths Management screen.
 
 ### Description
-As an Admin, I want to create a new learning path with basic information (name, description, difficulty, image), so that I can establish a new structured learning sequence for students to follow.
+As an Teacher, I want to create a new learning path with basic information (name, description, difficulty, image), so that I can establish a new structured learning sequence for students to follow.
 
 ### Preconditions
 - The user must be authenticated with a valid JWT token
-- The user must have Admin role permissions (verified by Auth & Role middleware)
+- The user must have Teacher role permissions (verified by Auth & Role middleware)
 - MinIO service must be accessible for image upload
 - Database must be available and accessible
-- The Admin must be on the Learning Paths Management screen
+- The Teacher must be on the Learning Paths Management screen
 
 ### Postconditions
 - A new learning path record is created in the database 
 - The learning path gets an auto-generated sequence number
 - The uploaded image is stored in MinIO with proper URL
-- Success message (MSG_1) is displayed to the Admin
-- The Admin is redirected back to the Learning Paths list or to the items management screen
+- Success message (MSG_1) is displayed to the Teacher
+- The Teacher is redirected back to the Learning Paths list or to the items management screen
 - The new learning path appears in the learning paths list
 
 ### Normal Sequence/Flow
 
-1. **The Admin clicks the "Create New" button on the Learning Paths Management screen.**
+1. **The Teacher clicks the "Create New" button on the Learning Paths Management screen.**
 2. **The system opens a Create Learning Path dialog/form with the following fields:**
    - Name (text input, required)
    - Description (textarea, optional)
    - Difficulty Level (dropdown: 1-5 stars, required)
    - Image Upload (file input, required)
 
-3. **The Admin enters the learning path name in the Name field.**
+3. **The Teacher enters the learning path name in the Name field.**
 4. **The system validates the name input in real-time (not empty, character limit) - shows (MSG_5) if empty, (MSG_7) if > 255 characters.**
 
-5. **The Admin enters a description for the learning path (optional).**
+5. **The Teacher enters a description for the learning path (optional).**
 6. **The system validates description length (max 1000 characters) - shows (MSG_8) if exceeded.**
 
-7. **The Admin selects difficulty level from dropdown (1-5).**
+7. **The Teacher selects difficulty level from dropdown (1-5).**
 8. **The system validates the difficulty selection - shows (MSG_9) if not selected, (MSG_10) if invalid.**
 
-9. **The Admin uploads an image file for the learning path.**
+9. **The Teacher uploads an image file for the learning path.**
 10. **The system validates the uploaded file - shows (MSG_11) if missing, (MSG_12) if > 5MB, (MSG_13) if invalid format:**
     - File format (JPEG, PNG, GIF, WebP)
     - File size (max 5MB)
     - File integrity
 
-11. **The Admin clicks "Save" button to create the learning path.**
+11. **The Teacher clicks "Save" button to create the learning path.**
 12. **The system performs comprehensive validation - shows respective error messages if validation fails:**
     - Name is not empty and unique in the system (MSG_5, MSG_6, MSG_7)
     - Difficulty is between 1-5 (MSG_9, MSG_10)
@@ -71,7 +71,7 @@ As an Admin, I want to create a new learning path with basic information (name, 
 ### Alternative Sequence/Flow
 
 **Alternative 1 - Cancel Operation:**
-- At any step: Admin clicks "Cancel" button
+- At any step: Teacher clicks "Cancel" button
 - System discards all input data
 - System returns to Learning Paths Management screen
 - No database changes are made
@@ -244,7 +244,7 @@ As an Admin, I want to create a new learning path with basic information (name, 
 | ID | Business Rule | Description | Implementation |
 |----|---------------|-------------|----------------|
 | **BR_1** | Transaction required for CREATE operations | MULTIPLE action include CREATE operations must use database transaction | Sequelize transaction wrapper around create operation |
-| **BR_2** | Admin authorization required | Only authenticated admin users can create learning paths | Auth.middleware.js + Role.middleware.js |
+| **BR_2** | Teacher authorization required | Only authenticated teacher users can create learning paths | Auth.middleware.js + Role.middleware.js |
 | **BR_3** | Fail-fast validation principle | Stop on first validation error and return immediately | Controller validation before database operations |
 | **BR_4** | File upload size restrictions | Images max 5MB, stored in MinIO with validation | FileValidation.helper.js + UploadToMinIO.helper.js |
 | **BR_5** | Soft delete policy | New learning paths created with is_active = 1 by default | Default value in model definition |
@@ -261,11 +261,11 @@ As an Admin, I want to create a new learning path with basic information (name, 
 ## Technical Implementation Notes
 
 ### Required API Endpoint
-- `POST /admin/learning-paths` - Create new learning path with image upload
+- `POST /teacher/learning-paths` - Create new learning path with image upload
 
 ### API Request Contract
 ```javascript
-POST /admin/learning-paths
+POST /teacher/learning-paths
 Content-Type: multipart/form-data
 Authorization: Bearer <JWT_TOKEN>
 
@@ -427,7 +427,7 @@ const validateCreateLearningPath = (req, res, next) => {
 
 ### Sequence Diagram Components
 **Actors & Objects:**
-- Admin (User)
+- Teacher (User)
 - Frontend UI (Create Learning Path Form)
 - API Gateway/Router
 - Auth Middleware
@@ -439,9 +439,9 @@ const validateCreateLearningPath = (req, res, next) => {
 - Message Manager
 
 **Key Interactions:**
-1. Admin → Frontend: Click "Create New" button
-2. Frontend → API: POST /admin/learning-paths (multipart form data)
-3. API → Auth Middleware: Verify JWT & admin role
+1. Teacher → Frontend: Click "Create New" button
+2. Frontend → API: POST /teacher/learning-paths (multipart form data)
+3. API → Auth Middleware: Verify JWT & teacher role
 4. API → File Middleware: Validate image file
 5. API → Controller: createLearningPath()
 6. Controller → Database: Begin transaction
@@ -450,7 +450,7 @@ const validateCreateLearningPath = (req, res, next) => {
 9. Controller → Model: Create learning path record
 10. Controller → Database: Commit transaction
 11. Controller → Frontend: Success response with data
-12. Frontend → Admin: Display success message & redirect
+12. Frontend → Teacher: Display success message & redirect
 
 ### Class Diagram Components
 **Main Classes:**

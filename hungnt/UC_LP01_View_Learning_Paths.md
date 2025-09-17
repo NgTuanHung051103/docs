@@ -3,29 +3,29 @@
 ## Use Case Details
 
 ### Primary Actors
-Admin
+Teacher
 
 ### Secondary Actors
 None
 
 ### Trigger
-The Admin clicks on the "Learning Paths" option in the management section.
+The Teacher clicks on the "Learning Paths" option in the management section.
 
 ### Description
-As an Admin, I want to view a list of available learning paths, so that I can efficiently browse, search, filter, and manage learning paths in the system.
+As an Teacher, I want to view a list of available learning paths, so that I can efficiently browse, search, filter, and manage learning paths in the system.
 
 ### Preconditions
-- The user must use an Admin account to log into the system.
+- The user must use an Teacher account to log into the system.
 - The system must have learning paths data available.
 
 ### Postconditions
-- The Admin can perform search, filter, and sort operations on the learning paths list.
-- The Admin can open the "Create new" dialog to create a new learning path or open the "Edit" dialog to edit the selected learning path.
-- The Admin can edit items in each learning path.
+- The Teacher can perform search, filter, and sort operations on the learning paths list.
+- The Teacher can open the "Create new" dialog to create a new learning path or open the "Edit" dialog to edit the selected learning path.
+- The Teacher can edit items in each learning path.
 
 ### Normal Sequence/Flow
 
-1. **The Admin clicks the Learning Paths management section.**
+1. **The Teacher clicks the Learning Paths management section.**
 2. **The system shows a table of learning paths with the following information in each column:**
    - Image (thumbnail)
    - Name
@@ -34,16 +34,16 @@ As an Admin, I want to view a list of available learning paths, so that I can ef
    - Items Count (number of active items in the path)
    - Action column (Edit items button, Edit information button)
 
-3. **The Admin can search for learning paths by name.**
+3. **The Teacher can search for learning paths by name.**
 4. **The system updates the table to display only learning paths matching the search term.**
 
-5. **The Admin can filter learning paths by:**
+5. **The Teacher can filter learning paths by:**
    - Difficulty Level (dropdown: 1-5)
    - Status (dropdown: Active/Inactive)
 
 6. **The system updates the table to display only learning paths matching the selected filters.**
 
-7. **The Admin can sort the table by:**
+7. **The Teacher can sort the table by:**
    - Name (A-Z, Z-A)
    - Difficulty Level (Low to High, High to Low)
    - Active Status
@@ -51,10 +51,10 @@ As an Admin, I want to view a list of available learning paths, so that I can ef
 
 8. **The system immediately refreshes the table with the selected sort order.**
 
-9. **The Admin can navigate through the list using pagination controls at the bottom.**
+9. **The Teacher can navigate through the list using pagination controls at the bottom.**
 10. **The system immediately refreshes the table to show learning paths in the selected page.**
 
-11. **The Admin can change the number of learning paths displayed per page (5, 10, 20, 50).**
+11. **The Teacher can change the number of learning paths displayed per page (5, 10, 20, 50).**
 12. **The system displays the number of learning paths per page matching the selected number.**
 
 ### Alternative Sequence/Flow
@@ -139,7 +139,7 @@ None
 ## Technical Implementation Notes
 
 ### Required API Endpoint for View Screen
-- `GET /admin/learning-paths` - Dùng duy nhất cho màn hình xem danh sách learning path (bao gồm search, filter, sort, pagination)
+- `GET /teacher/learning-paths` - Dùng duy nhất cho màn hình xem danh sách learning path (bao gồm search, filter, sort, pagination)
 
 ### Database Query Requirements
 - Truy vấn duy nhất với Sequelize `findAndCountAll()`
@@ -150,7 +150,7 @@ None
 
 ### Security Considerations
 - Yêu cầu xác thực JWT cho endpoint này
-- Chỉ admin mới truy cập được
+- Chỉ teacher mới truy cập được
 - Validate/sanitize input search/filter
 - Chống SQL injection qua query tham số hóa
 
@@ -160,7 +160,7 @@ None
 
 ### Sequence Diagram Components
 **Actors & Objects:**
-- Admin (User)
+- Teacher (User)
 - Frontend UI (Learning Path Management Screen)
 - API Gateway/Router
 - Auth Middleware
@@ -170,16 +170,16 @@ None
 - Message Manager
 
 **Key Interactions:**
-1. Admin → Frontend: Click "Learning Paths" menu
-2. Frontend → API: GET /admin/learning-paths (with JWT token)
-3. API → Auth Middleware: Verify JWT & admin role
+1. Teacher → Frontend: Click "Learning Paths" menu
+2. Frontend → API: GET /teacher/learning-paths (with JWT token)
+3. API → Auth Middleware: Verify JWT & teacher role
 4. API → Controller: getAllLearningPaths()
 5. Controller → Repository: findAllWithPaging(filters, sort, pagination)
 6. Repository → Database: SELECT with JOIN LearningPathItems
 7. Database → Repository: Return learning paths data
 8. Repository → Controller: Formatted results
 9. Controller → Frontend: JSON response with pagination
-10. Frontend → Admin: Display table with data
+10. Frontend → Teacher: Display table with data
 
 ### Class Diagram Components
 **Main Classes:**
@@ -213,4 +213,4 @@ None
 
 ---
 
-Ghi chú: Màn hình này chỉ sử dụng endpoint `GET /admin/learning-paths`. Các thao tác tạo, cập nhật, đổi trạng thái sẽ dùng ở use case khác.
+Ghi chú: Màn hình này chỉ sử dụng endpoint `GET /teacher/learning-paths`. Các thao tác tạo, cập nhật, đổi trạng thái sẽ dùng ở use case khác.

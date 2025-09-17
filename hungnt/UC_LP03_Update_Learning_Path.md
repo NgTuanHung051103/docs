@@ -3,36 +3,36 @@
 ## Use Case Details
 
 ### Primary Actors
-Admin
+Teacher
 
 ### Secondary Actors
 None
 
 ### Trigger
-The Admin clicks on the "Edit Information" button in the column Action of Learning Paths Management screen for a specific learning path.
+The Teacher clicks on the "Edit Information" button in the column Action of Learning Paths Management screen for a specific learning path.
 
 ### Description
-As an Admin, I want to update an existing learning path's information (name, description, difficulty, image), so that I can maintain and improve the learning content while ensuring student progress is preserved.
+As an Teacher, I want to update an existing learning path's information (name, description, difficulty, image), so that I can maintain and improve the learning content while ensuring student progress is preserved.
 
 ### Preconditions
 - The user must be authenticated with a valid JWT token
-- The user must have Admin role permissions (verified by Auth & Role middleware)
+- The user must have Teacher role permissions (verified by Auth & Role middleware)
 - MinIO service must be accessible for image upload (if image is updated)
 - Database must be available and accessible
 - The learning path must exist in the system
-- The Admin must be on the Learning Paths Management screen
+- The Teacher must be on the Learning Paths Management screen
 
 ### Postconditions
 - The learning path record is updated in the database with new information
 - If image is updated, the new image is stored in MinIO with proper URL
-- Success message (MSG_1) is displayed to the Admin
-- The Admin is redirected back to the Learning Paths list
+- Success message (MSG_1) is displayed to the Teacher
+- The Teacher is redirected back to the Learning Paths list
 - The updated learning path appears with new information in the list
 - If learning path is deactivated, check student progress constraints
 
 ## Normal Sequence/Flow
 
-1. **The Admin clicks the "Edit Information" button (pencil icon) for a specific learning path in the Learning Paths Management table.**
+1. **The Teacher clicks the "Edit Information" button (pencil icon) for a specific learning path in the Learning Paths Management table.**
 
 2. **The system retrieves the current learning path data and opens an Update Learning Path dialog/form pre-filled with existing values:**
    - Name (text input, required, current value displayed)
@@ -41,25 +41,25 @@ As an Admin, I want to update an existing learning path's information (name, des
    - Image Upload (file input, optional, current image thumbnail displayed)
    - Active Status (toggle/dropdown, current status selected)
 
-3. **The Admin modifies the learning path name in the Name field.**
+3. **The Teacher modifies the learning path name in the Name field.**
 4. **The system validates the name input in real-time (not empty, character limit, uniqueness except current record) - shows (MSG_5) if empty, (MSG_7) if > 255 characters, (MSG_6) if name exists in other records.**
 
-5. **The Admin updates the description for the learning path (optional).**
+5. **The Teacher updates the description for the learning path (optional).**
 6. **The system validates description length (max 1000 characters) - shows (MSG_8) if exceeded.**
 
-7. **The Admin changes difficulty level from dropdown (1-5).**
+7. **The Teacher changes difficulty level from dropdown (1-5).**
 8. **The system validates the difficulty selection - shows (MSG_9) if not selected, (MSG_10) if invalid.**
 
-9. **The Admin uploads a new image file for the learning path (optional).**
+9. **The Teacher uploads a new image file for the learning path (optional).**
 10. **The system validates the uploaded file if provided - shows (MSG_11) if invalid format, (MSG_12) if > 5MB, (MSG_13) if invalid format:**
     - File format (JPEG, PNG, GIF, WebP)
     - File size (max 5MB)
     - File integrity
 
-11. **The Admin changes the active status (Active/Inactive).**
-12. **If Admin selects Inactive status, the system checks student progress - shows (MSG_16) if students have accessed this learning path and prevents deactivation.**
+11. **The Teacher changes the active status (Active/Inactive).**
+12. **If Teacher selects Inactive status, the system checks student progress - shows (MSG_16) if students have accessed this learning path and prevents deactivation.**
 
-13. **The Admin clicks "Save" button to update the learning path.**
+13. **The Teacher clicks "Save" button to update the learning path.**
 14. **The system performs comprehensive validation - shows respective error messages if validation fails:**
     - Name is not empty and unique except current record (MSG_5, MSG_6, MSG_7)
     - Difficulty is between 1-5 (MSG_9, MSG_10)
@@ -78,7 +78,7 @@ As an Admin, I want to update an existing learning path's information (name, des
 ## Alternative Sequence/Flow
 
 **Alternative 1 - Cancel Operation:**
-- At any step: Admin clicks "Cancel" button
+- At any step: Teacher clicks "Cancel" button
 - System discards all input changes
 - System returns to Learning Paths Management screen with original data
 - No database changes are made
@@ -86,7 +86,7 @@ As an Admin, I want to update an existing learning path's information (name, des
 
 **Alternative 2 - Update Without Image Change:**
 - Steps 1-8: Normal flow until image upload
-- Step 9: Admin does not upload new image
+- Step 9: Teacher does not upload new image
 - Step 10: System skips image validation
 - Steps 11-17: Continue with normal flow using existing image URL
 
@@ -193,7 +193,7 @@ As an Admin, I want to update an existing learning path's information (name, des
 - **Real-time validation:** Show validation errors immediately when user leaves field
 - **Submit validation:** Prevent form submission if any required field is invalid
 - **Visual indicators:** Red border for invalid fields, green checkmark for valid fields
-- **Error messages:** Display specific error messages below each field
+- **Error messages:** Display specific error messages below each field by toast
 - **Progress indicator:** Show upload progress for new image files
 - **Student progress check:** Validate before allowing status change to inactive
 
@@ -262,7 +262,7 @@ As an Admin, I want to update an existing learning path's information (name, des
 - Unexpected server errors
 
 **MSG_16** - Hiển thị khi:
-- Admin cố gắng deactive learning path đã có student progress
+- Teacher cố gắng deactive learning path đã có student progress
 - Business rule validation để protect student data
 
 **MSG_17** - Hiển thị khi:
@@ -274,7 +274,7 @@ As an Admin, I want to update an existing learning path's information (name, des
 | ID | Business Rule | Description | Implementation |
 |----|---------------|-------------|----------------|
 | **BR_1** | Transaction required for UPDATE operations | All UPDATE operations must use database transaction | Sequelize transaction wrapper around update operation |
-| **BR_2** | Admin authorization required | Only authenticated admin users can update learning paths | Auth.middleware.js + Role.middleware.js |
+| **BR_2** | Teacher authorization required | Only authenticated teacher users can update learning paths | Auth.middleware.js + Role.middleware.js |
 | **BR_3** | Fail-fast validation principle | Stop on first validation error and return immediately | Controller validation before database operations |
 | **BR_4** | File upload size restrictions | Images max 5MB, stored in MinIO with validation | FileValidation.helper.js + UploadToMinIO.helper.js |
 | **BR_5** | Soft delete policy | Cannot deactivate learning paths with student progress | Check StudentReading records before status change |
@@ -289,11 +289,11 @@ As an Admin, I want to update an existing learning path's information (name, des
 ## Technical Implementation Notes
 
 ### Required API Endpoint
-- `PUT /admin/learning-paths/:id` - Update existing learning path with optional image upload
+- `PUT /teacher/learning-paths/:id` - Update existing learning path with optional image upload
 
 ### API Request Contract
 ```javascript
-PUT /admin/learning-paths/:id
+PUT /teacher/learning-paths/:id
 Content-Type: multipart/form-data
 Authorization: Bearer <JWT_TOKEN>
 
@@ -431,7 +431,7 @@ const checkStudentProgress = async (learningPathId) => {
 
 ### Sequence Diagram Components
 **Actors & Objects:**
-- Admin (User)
+- Teacher (User)
 - Frontend UI (Update Learning Path Form)
 - API Gateway/Router
 - Auth Middleware
@@ -444,10 +444,10 @@ const checkStudentProgress = async (learningPathId) => {
 - Message Manager
 
 **Key Interactions:**
-1. Admin → Frontend: Click "Edit Information" button
+1. Teacher → Frontend: Click "Edit Information" button
 2. Frontend → API: GET learning path data for pre-filling form
-3. Frontend → API: PUT /admin/learning-paths/:id (multipart form data)
-4. API → Auth Middleware: Verify JWT & admin role
+3. Frontend → API: PUT /teacher/learning-paths/:id (multipart form data)
+4. API → Auth Middleware: Verify JWT & teacher role
 5. API → File Middleware: Validate image file (if provided)
 6. API → Controller: updateLearningPath()
 7. Controller → Repository: Check if learning path exists
@@ -457,7 +457,7 @@ const checkStudentProgress = async (learningPathId) => {
 11. Controller → Repository: Update learning path record
 12. Controller → Database: Commit transaction
 13. Controller → Frontend: Success response with updated data
-14. Frontend → Admin: Display success message & refresh list
+14. Frontend → Teacher: Display success message & refresh list
 
 ### Class Diagram Components
 **Main Classes:**
