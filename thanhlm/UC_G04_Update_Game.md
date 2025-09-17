@@ -1,65 +1,56 @@
-# UC_G03: Update Game
+# UC_G04 Update Game
 
-## Use Case Details
-### Primary Actors
+## Primary Actors
 Admin
 
-### Secondary Actors
-System
+## Secondary Actors
+None
 
-### Trigger
-The Admin clicks the **Edit** button for a specific Game.
+## Trigger
+The Admin clicks the "Edit" icon button of a game in the Game Management section.
 
-### Description
-As an Admin, I want to update the details of an existing game, so that I can correct or improve its information.
+## Description
+As an Admin, I want to update the details (e.g., name, description) of an existing game, so that I can correct information, refine the game system.
 
-### Preconditions
-- Admin must be logged in.
-- The selected Game must exist in the database.
+## Preconditions
+The user must use an Admin account to log into the system.
+There must be at least one created game in the system.
 
-### Postconditions
-- The Game information is updated and stored in the database.
+## Postconditions
+The game has been updated in the database.
+The system displays the following success toast message (MSG17).
+If the update fails, the system displays an error message (MSG18) or message following error and data is not changed.
 
-### Normal Sequence/Flow
-1. Admin clicks **Edit** on a specific Game.
-2. System displays the current Game details in an editable form.
-3. Admin updates one or more fields (name, description, type, status, words).
-4. Admin clicks **Save**.
-5. System saves the updated Game and shows confirmation.
+## Normal Sequence/Flow
+1. The Admin clicks the "Game Management" section.
+2. The System displays the list of games with the detailed information and the action column.
+3. The Admin clicks the "Edit" button of the desired game in the action column.
+4. The System shows the Update Game form with existing information filled in: Name, Description, Type, Status.
+5. The Admin edits the fields and clicks the "Save" button.
+6. The system validates the inputs:
+   - If the record does not exist in the system, the system displays the message (MSG27).
+   - If the Name is empty, the system displays the message (MSG29).
+   - If the Name has more than 255 characters, the system displays the toast message (MSG30).
+   - If the Description has more than 1000 characters, the system displays the toast message (MSG31).
+   - If the Type is not selected, the system displays the message (MSG52).
+7. If validation passes, the system starts a database transaction.
+8. Within the transaction, the system performs the following operations:
+   - Updates the game record with new information
+   - Updates GameWord relationships if words are modified
+   - Maintains data integrity across related tables
+9. If all operations succeed, the system commits the transaction.
+10. The system displays a success toast message.
+11. The system refreshes the list to show the updated game.
 
-### Exception Sequence/Flow
-- E1: Invalid input (e.g., empty name) → Show `"game.invalid.update"`.
-- E2: Game not found → Show `"game.notfound"`.
-- E3: Database error → Show `"game.update.fail"`.
+## Alternative Sequence/Flow
+None
 
-### Mockup Design
-+---------------------------------+
-| Edit Game: Wordle |
-+---------------------------------+
-| Name: [Wordle_______] |
-| Description: [Puzzle Game] |
-| Type: [Puzzle v] |
-| Status: [Active v] |
-| |
-| [Cancel] [Save] |
-+---------------------------------+
+## Exception Sequence/Flow
+Step 7, 8, 9: error during updating the game: If any operation within the transaction fails (e.g., due to connection errors or not found game in the system), the system will rollback the transaction and display the following error toast message (MSG18, MSG21, MSG27,...).
 
-### Error Messages & Validation Messages
-- `"game.invalid.update"` = "Game update data is invalid."
-- `"game.notfound"` = "Game not found."
-- `"game.update.fail"` = "Failed to update game."
-
-### Messages
-- `"game.update.success"` = "Game updated successfully."
-
-### When These Messages Occur
-- On successful update → success message.
-- On invalid input or DB error → error message.
-
-### Business Rules
-- Game name must not be empty.
-- Status must be either Active or Deactive.
-
-### Diagram Components Overview
-- Actors: Admin, System
-- Entities: Game, LearningPathItem, GameWord, Word
+## Business Rules
+All UPDATE operations must use database transactions to ensure data consistency.
+Game name must not be empty.
+Status must be either Active or Deactive.
+If any part of the update process fails, the entire operation is rolled back.
+GameWord relationships must be updated atomically with the game record.

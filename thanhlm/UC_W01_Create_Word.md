@@ -1,71 +1,65 @@
-# UC_W01: Create Word
+# UC_W01 Create Word
 
-## Use Case Details
-
-### Primary Actors
+## Primary Actors
 Admin
 
-### Secondary Actors
+## Secondary Actors
 None
 
-### Trigger
-- The Admin clicks the **"Create Word"** option in the management section.  
-- Or the Admin clicks **"Add New Word"** while creating/editing a Game.
+## Trigger
+The Admin clicks on the "Create Word" option in the management section.
 
-### Description
-As an Admin, I want to create a new word, so that I can expand the vocabulary repository or link it directly to a Game.
+## Description
+As an Admin, I want to create a new word, so that I can expand the vocabulary repository for the learning system.
 
-### Preconditions
-- The user must use an Admin account to log into the system.
+## Preconditions
+The user must use an Admin account to log into the system.
 
-### Postconditions
-- A new Word has been created and stored in the system.
-- If created during Game Editing, the Word is automatically linked to that Game.
+## Postconditions
+A new word is created and stored in the system.
+The system displays the following success toast message (MSG15).
+If validation fails or an error occurs, the system displays the relevant error message and prevents the word from being created, then displays an error message (MSG16).
 
-### Normal Sequence/Flow
-**Flow A (Management)**
-1. Admin selects **Create Word**.  
-2. System displays the create form.  
-3. Admin enters word details (word, image, level, type, note).  
-4. Admin clicks **Save**.  
-5. System validates input and stores the word.  
-6. System shows a success message.  
+## Normal Sequence/Flow
+1. The Admin clicks the "Word Management" section.
+2. The system shows the list of words and action buttons.
+3. The Admin clicks the "Create" button.
+4. The system shows the create dialog with fields: Word Text, Image, Level, Type, and Note.
+5. The Admin fills in the form and clicks the "Save" button.
+6. The system validates the input fields as follows:
+   - If the Word Text is empty, the system displays the message (MSG29).
+   - If the Word Text has more than 255 characters, the system displays the toast message (MSG30).
+   - If the Note has more than 1000 characters, the system displays the toast message (MSG31).
+   - If the Image is not selected, the system displays the message (MSG50).
+   - If the Image's size is bigger than 5MB, the system displays the message (MSG51).
+   - If the Image type is not allowed (must be jpeg, jpg, png, gif, webp), the system displays the message (MSG55).
+   - If the Level is not selected, the system displays the message (MSG52).
+   - If the Type is not selected, the system displays the message (MSG53).
+   - If the word already exists, the system displays the message (MSG54).
+7. If validation fails, the form will not be submitted and the relevant error messages will be displayed.
+8. If validation passes, the system starts a database transaction.
+9. Within the transaction, the system performs the following operations:
+   - Validates and uploads the image to MinIO using uploadToMinIO(file, "words") helper
+   - Generates unique filename for the uploaded image
+   - Creates the new word record with is_active = true by default
+   - Ensures word text uniqueness across the system
+10. If all operations succeed, the system commits the transaction.
+11. The system displays a success toast message (MSG15).
+12. The dialog is closed.
+13. The system refreshes the list of words to include the new word.
 
-**Flow B (Game Editing)**
-1. Admin opens **Create/Edit Game**.  
-2. Admin clicks **Add New Word**.  
-3. System shows a popup to enter word details.  
-4. Admin clicks **Save**.  
-5. System validates input and stores the word.  
-6. System creates the relation `GameWord`.  
-7. System shows a success message.  
+## Alternative Sequence/Flow
+None
 
-### Alternative Sequence/Flow
-- None.  
+## Exception Sequence/Flow
+Step 8, 9, 10: error during create the word: If any operation within the transaction fails (e.g., due to connection errors, MinIO upload failure, or uniqueness constraint violation), the system will rollback the transaction and display the following error toast message (MSG16, MSG21, MSG29, MSG30, MSG31, MSG50, MSG51, MSG52, MSG53, MSG54, MSG55).
 
-### Exception Sequence/Flow
-- If required fields are missing → `"Please fill out this field"`.  
-- If word already exists → `"Word already exists"`.  
-- If system error occurs → `"Failed to create word"`.  
-
-### Mockup Design
-
-### Error Messages & Validation Messages
-- `"word.invalid.text"` = "Word text cannot be empty."  
-- `"word.exists"` = "This word already exists."  
-- `"word.create.fail"` = "Failed to create word."  
-
-### Messages
-- `"word.create.success"` = "Word created successfully."  
-
-### When These Messages Occur
-- On successful create → success message.  
-- On validation fail or duplicate → error message.  
-
-### Business Rules
-- Word text must be unique.  
-- Words can be created independently in management or linked directly in a Game.  
-
-### Diagram Components Overview
-- Actors: Admin, System  
-- Entities: Word, GameWord, Game
+## Business Rules
+All CREATE operations must use database transactions to ensure data consistency.
+Word text must be unique across the system.
+Words can be created independently and later linked to games through GameWord relationships.
+Image upload to MinIO and database record creation must be atomic.
+Only allowed image types (jpeg, jpg, png, gif, webp) with maximum size 5MB are accepted.
+All uploaded files must be validated using validateKidReadingFiles() before processing.
+Generate unique filenames when uploading to MinIO to prevent conflicts.
+If any part of the creation process fails, the entire operation is rolled back.
