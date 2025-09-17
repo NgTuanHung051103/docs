@@ -136,12 +136,15 @@ As an Teacher, I want to view, add, remove, and reorder readings and games withi
   1. System opens "Add Reading to Learning Path" modal with 30%-70% left-right layout
   2. Left panel shows all available categories as vertical clickable list
   3. Right panel shows readings from first category by default
+  3.a The right panel's difficulty filter is initialized to the current learning path's `difficulty_level` (auto-applied). Teachers may override this filter in the modal.
   4. Teacher clicks on different category in left panel - category highlights and right panel updates with readings
   5. Teacher can search readings in right panel search box
   6. Teacher can filter readings by difficulty and status in right panel
+  - By default the difficulty filter value in the modal equals the learning path's difficulty_level so readings shown initially match the path level.
   7. Teacher selects multiple readings by checking checkboxes
   8. Teacher clicks "Select" button to add chosen readings to learning path
   9. System validates readings not already in path and adds them with proper sequence_order
+  - If a selected reading's difficulty differs from the path's difficulty_level, show a non-blocking warning (MSG_11) in the modal with two options: "Continue Add" or "Cancel". Teacher can proceed to add readings with different difficulty after confirming.
   10. Modal closes and main table refreshes with new readings added
 - **Result:** Selected readings added to learning path in appropriate category positions
 
@@ -149,11 +152,14 @@ As an Teacher, I want to view, add, remove, and reorder readings and games withi
 - **Condition:** At step 8, Teacher clicks category-specific "Add Reading" button
 - **Steps:**
   1. System opens "Add Reading to Learning Path" modal with same 30%-70% layout
+  1.a The right panel's difficulty filter is initialized to the current learning path's `difficulty_level` (auto-applied). This modal is pre-filtered by category but the teacher may change the difficulty filter to another value.
   2. Left panel shows only the selected category (highlighted, non-interactive)
   3. Right panel shows only readings from that specific category
   4. Teacher can search and filter readings in right panel (same as Alternative 1)
+  - By default the difficulty filter value in the modal equals the learning path's difficulty_level so readings shown initially match the path level.
   5. Teacher selects readings and clicks "Select" button
   6. System adds readings to learning path within that category group
+  - If any selected reading has difficulty different from the path's difficulty_level, show a non-blocking warning (MSG_11) with options: "Continue Add" or "Cancel" before performing the add. Choosing Continue will proceed to add; Cancel will abort selection.
   7. Modal closes and table refreshes showing new readings in category
 - **Result:** Selected readings added to learning path within specific category grouping
 
