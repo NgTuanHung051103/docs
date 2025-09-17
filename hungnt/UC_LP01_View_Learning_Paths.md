@@ -39,12 +39,12 @@ As an Teacher, I want to view a list of available learning paths, so that I can 
 
 1. **The Teacher clicks the Learning Paths management section.**
 2. **The system shows a table of learning paths with the following information in each column:**
-   - Image (thumbnail)
-   - Name
-   - Difficulty Level (1-5 stars)
-   - Active Status (Active/Inactive badge)
-   - Items Count (number of active items in the path)
-   - Action column (Edit items button, Edit information button)
+  - Image (thumbnail)
+  - Name
+  - Difficulty Level (1-5 stars)
+  - Active Status (Active / Inactive)
+  - Items Count (number of active items in the path)
+  - Action column (Edit information button, Edit items button)
 
 3. **The Teacher can search for learning paths by name.**
 4. **The system updates the table to display only learning paths matching the search term.**
@@ -91,13 +91,13 @@ None
 │ Filters: [Difficulty ▼] [Status ▼]                        [🔄 Reset] [🔍 Search]   │
 │                                                                                     │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
-│ Image    │ Name                 │ Difficulty │ Status   │ Items │ Last Update │ Action│
+│ Image    │ Name                 │ Difficulty │ Status          │ Items │ Action             │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
-│ [📖]     │ Basic English Path   │ 2      │ [Active] │  12   │ 15/09/2025  │ [✏️][📖]│
-│ [📚]     │ Advanced Math        │ 5│ [Active] │   8   │ 14/09/2025  │ [✏️][📖]│
-│ [🎨]     │ Creative Art         │ 3      │[Inactive]│   0   │ 10/09/2025  │ [✏️][📖]│
-│ [🔬]     │ Science Explorer     │ 4      │ [Active] │  15   │ 12/09/2025  │ [✏️][📖]│
-│ [🎵]     │ Music Foundation     │ 2      │[Inactive]│   3   │ 08/09/2025  │ [✏️][📖]│
+│ [📖]     │ Basic English Path   │ ★★        │ Active           │  12   │ [Edit info][Items] │
+│ [📚]     │ Advanced Math        │ ★★★★★     │ Active           │   8   │ [Edit info][Items] │
+│ [🎨]     │ Creative Art         │ ★★★       │ Inactive         │   0   │ [Edit info][Items] │
+│ [🔬]     │ Science Explorer     │ ★★★★      │ Active           │  15   │ [Edit info][Items] │
+│ [🎵]     │ Music Foundation     │ ★★        │ Inactive         │   3   │ [Edit info][Items] │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
 │                        Showing 1-5 of 23 records                                   │
 │                    [◀️ Previous] [1][2][3][4][5] [Next ▶️]                         │
@@ -109,10 +109,17 @@ None
 - **Search Bar:** Text input for searching by learning path name
 - **Filter Dropdowns:** 
   - Difficulty: 1 , 2, 3, 4, 5
-  - Status: Active, Inactive
-- **Sort Controls:** Click column headers to sort (Name, Difficulty, Status, Items Count)
+  - Status: Active, Inactive (filter only — separate from the per-row toggle)
+- **Status (Active / Inactive):** Each row shows the current status as text `Active` or `Inactive`.
+  - Note: The management list displays all learning paths to teachers regardless of their `is_active` value; Inactive paths remain visible in the teacher's table.
+  - To change status, the teacher opens the edit dialog or uses bulk actions. Changing status hides/unhides the path for students based on `is_active`.
+  - Status changes should call the API endpoint (see Technical Implementation Notes). Confirm when deactivating a path that contains active items.
+- **Sort Controls:** Click column headers to sort (Name, Difficulty, Active, Items Count)
 - **Pagination:** Previous/Next buttons + page numbers + records per page selector
-- **Action Buttons:** Edit (pencil icon), Edit Items (list icon)
+- **Action Buttons (per row):**
+  - `Edit information` — opens the edit dialog for learning path metadata (name, image, difficulty, description, etc.)
+  - `Edit items` — opens the learning path items management (the UC_LP04 screen)
+  - Note: Activation can be performed via the Edit dialog or via bulk Activate/Deactivate actions in the table toolbar.
 
 ---
 
@@ -133,7 +140,7 @@ None
 
 ---
 
-## Business Rules
+### Business Rules
 
 
 ### Business Rules Applied to UC_LP01
@@ -146,12 +153,15 @@ None
 | **BR_7** | Learning paths must display items count from active learning_path_items only (is_active = 1) | Ensures accurate count of available content for students |
 | **BR_8** | All search/filter/sort/pagination must be processed in a single query | Optimizes performance and prevents multiple database calls |
 | **BR_11** | Difficulty level must be between 1-5 | Standardizes difficulty assessment across all learning paths |
+| **BR_12** | Teachers can change a learning path's Active status (Active/Inactive) via the Edit dialog or bulk actions | The management list shows all learning paths to teachers regardless of `is_active`. Changing a path to Inactive will hide it from students (but it remains visible to teachers). A confirmation is required when deactivating a path that contains active items. |
 ---
 
-## Technical Implementation Notes
+### Technical Implementation Notes
 
 ### Required API Endpoint for View Screen
 - `GET /teacher/learning-paths` - Dùng duy nhất cho màn hình xem danh sách learning path (bao gồm search, filter, sort, pagination)
+
+- `PUT /teacher/learning-paths/:id/status` - Replace `is_active` for a learning path. Request body: `{ "is_active": true|false }`. Used by status change actions in Edit dialog or bulk actions. Return 200 and the updated resource on success.
 
 ### Database Query Requirements
 - Truy vấn duy nhất với Sequelize `findAndCountAll()`
