@@ -1,5 +1,17 @@
 # UC_LP04: Manage Learning Path Items
 
+## Table of Contents
+
+- [Use Case Details](#use-case-details)
+- [Normal Sequence/Flow](#normal-sequenceflow)
+- [Mockup Design](#mockup-design)
+- [UI Elements Description](#ui-elements-description)
+- [Error Messages & Validation Messages](#error-messages--validation-messages)
+- [Business Rules Applied to UC_LP04](#business-rules-applied-to-uc_lp04)
+- [Technical Implementation Notes](#technical-implementation-notes)
+- [Diagram Components Overview](#diagram-components-overview)
+- [Notes](#notes)
+
 ## Use Case Details
 
 ### 1. USE CASE DETAILS

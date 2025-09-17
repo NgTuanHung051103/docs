@@ -1,5 +1,17 @@
 # UC_LP02: Create Learning Path
 
+## Table of Contents
+
+- [Use Case Details](#use-case-details)
+- [Normal Sequence/Flow](#normal-sequenceflow)
+- [Mockup Design](#mockup-design)
+- [UI Elements Description](#ui-elements-description)
+- [Error Messages & Validation Messages](#error-messages--validation-messages)
+- [Business Rules](#business-rules)
+- [Technical Implementation Notes](#technical-implementation-notes)
+- [Diagram Components Overview](#diagram-components-overview)
+- [Notes](#ghi-ch%c3%ba)
+
 ## Use Case Details
 
 ### Primary Actors
