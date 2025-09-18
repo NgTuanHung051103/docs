@@ -59,7 +59,7 @@ As an Teacher, I want to view a list of available learning paths, so that I can 
    - Name (A-Z, Z-A)
    - Difficulty Level (Low to High, High to Low)
    - Active Status
-   - Items Count
+   - Items Count 
 
 8. **The system immediately refreshes the table with the selected sort order.**
 
@@ -86,18 +86,16 @@ None
 │                           Learning Paths Management                                  │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                     │
-│ [+ Create New]                                              🔍 [Search by name...] │
-│                                                                                     │
-│ Filters: [Difficulty ▼] [Status ▼]                        [🔄 Reset] [🔍 Search]   │
+│ Filters: [Difficulty ▼] [Status ▼]                 [🔍 Search]   │[+ Create New]    |
 │                                                                                     │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
-│ Image    │ Name                 │ Difficulty │ Status          │ Items │ Action             │
+│ Image    │ Name                 │ Difficulty │ Status       │ Items Count │ Action     │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
-│ [📖]     │ Basic English Path   │ ★★        │ Active           │  12   │ [Edit info][Items] │
-│ [📚]     │ Advanced Math        │ ★★★★★     │ Active           │   8   │ [Edit info][Items] │
-│ [🎨]     │ Creative Art         │ ★★★       │ Inactive         │   0   │ [Edit info][Items] │
-│ [🔬]     │ Science Explorer     │ ★★★★      │ Active           │  15   │ [Edit info][Items] │
-│ [🎵]     │ Music Foundation     │ ★★        │ Inactive         │   3   │ [Edit info][Items] │
+│ [📖]     │ Basic English Path   │ ★★        │ Active        │  12   │ [Edit info][Edit items] │
+│ [📚]     │ Advanced Math        │ ★★★★★     │ Active      │   8   │ [Edit info][Edit items] │
+│ [🎨]     │ Creative Art         │ ★★★       │ Inactive     │   0   │ [Edit info][Edit items] │
+│ [🔬]     │ Science Explorer     │ ★★★★      │ Active       │  15   │ [Edit info][Edit items] │
+│ [🎵]     │ Music Foundation     │ ★★        │ Inactive      │   3   │ [Edit info][Edit items] │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
 │                        Showing 1-5 of 23 records                                   │
 │                    [◀️ Previous] [1][2][3][4][5] [Next ▶️]                         │
@@ -149,25 +147,19 @@ None
 |----|---------------|-------------|
 | **BR_1** | The list displays 10 records per page by default | The number record can be changed via the "Display" dropdown below the table. |
 | **BR_2** | The user must have permission or be authorized to access certain functionalities | Ensure the security for the system, only allow users to have the right permission to implement the function. |
-| **BR_5** | The device must connect to the internet | Connect to the internet so as to send requests to the server. |
-| **BR_7** | Learning paths must display items count from active learning_path_items only (is_active = 1) | Ensures accurate count of available content for students |
-| **BR_8** | All search/filter/sort/pagination must be processed in a single query | Optimizes performance and prevents multiple database calls |
-| **BR_11** | Difficulty level must be between 1-5 | Standardizes difficulty assessment across all learning paths |
-| **BR_12** | Teachers can change a learning path's Active status (Active/Inactive) via the Edit dialog or bulk actions | The management list shows all learning paths to teachers regardless of `is_active`. Changing a path to Inactive will hide it from students (but it remains visible to teachers). A confirmation is required when deactivating a path that contains active items. |
 ---
 
 ### Technical Implementation Notes
 
 ### Required API Endpoint for View Screen
-- `GET /teacher/learning-paths` - Dùng duy nhất cho màn hình xem danh sách learning path (bao gồm search, filter, sort, pagination)
+- `GET /api/learning-path/cms/all` - Dùng duy nhất cho màn hình xem danh sách learning path (bao gồm search, filter, sort, pagination)
 
-- `PUT /teacher/learning-paths/:id/status` - Replace `is_active` for a learning path. Request body: `{ "is_active": true|false }`. Used by status change actions in Edit dialog or bulk actions. Return 200 and the updated resource on success.
+- `PUT /api/learning-path/1/update-status` - Replace `is_active` for a learning path. Request body: `{ "is_active": true|false }`. Used by status change actions in Edit dialog or bulk actions. Return 200 and the updated resource on success.
 
 ### Database Query Requirements
 - Truy vấn duy nhất với Sequelize `findAndCountAll()`
 - Bao gồm liên kết model: LearningPathItems (chỉ đếm item active)
 - Hỗ trợ WHERE động theo filter/search
-- ORDER BY theo sort
 - LIMIT/OFFSET cho phân trang
 
 ### Security Considerations
@@ -193,10 +185,10 @@ None
 
 **Key Interactions:**
 1. Teacher → Frontend: Click "Learning Paths" menu
-2. Frontend → API: GET /teacher/learning-paths (with JWT token)
+2. Frontend → API: GET /api/learning-path/cms/all (with JWT token)
 3. API → Auth Middleware: Verify JWT & teacher role
 4. API → Controller: getAllLearningPaths()
-5. Controller → Repository: findAllWithPaging(filters, sort, pagination)
+5. Controller → Repository: findAllWithPaging(offset, limit, searchTerm, is_active, difficulty_level)
 6. Repository → Database: SELECT with JOIN LearningPathItems
 7. Database → Repository: Return learning paths data
 8. Repository → Controller: Formatted results
@@ -232,7 +224,3 @@ None
 - Controller uses Repository
 - Controller uses MessageManager
 - All requests go through AuthMiddleware
-
----
-
-Ghi chú: Màn hình này chỉ sử dụng endpoint `GET /teacher/learning-paths`. Các thao tác tạo, cập nhật, đổi trạng thái sẽ dùng ở use case khác.
