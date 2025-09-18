@@ -22,8 +22,6 @@ As an Admin, I want to deactivate a word using soft delete, so that I can remove
 ### Preconditions
 - User must be authenticated as Admin
 - User must have word management permissions
-- The selected word must exist in the database
-- System must be accessible and operational
 
 ### Postconditions
 - Word is marked as inactive (is_active = false) in database
@@ -47,7 +45,6 @@ As an Admin, I want to deactivate a word using soft delete, so that I can remove
    - Check StudentProgress for learning data involving this word
 9. If word is used in active games:
    - System displays warning dialog (MSG_W04_001): "This word is used in X active games. Students' learning progress will be preserved but the word will become unavailable for new assignments."
-   - Admin must acknowledge the impact
 10. System performs soft delete operation:
     - Set word.is_active = false
     - Set word.deleted_at = current timestamp
@@ -61,18 +58,9 @@ As an Admin, I want to deactivate a word using soft delete, so that I can remove
 
 ## 3. ALTERNATIVE/EXCEPTION FLOWS
 
-### Alternative Flow A: Cancel Deactivation
-- Step 6: Admin clicks "Cancel" in confirmation dialog
-- System returns to word management list without changes
-
-### Alternative Flow B: Word Usage Impact Review
-- Step 9: Admin requests detailed usage report before confirming
-- System displays usage statistics: games count, students affected, learning progress impact
-- Admin can proceed with or cancel the deactivation
-
 ### Exception Flow E1: Word Not Found
 - Step 7: Word no longer exists in database
-- System displays error (MSG_W04_003): "Word not found. It may have been already deleted."
+- System displays error (MSG_W04_003): "Word not found"
 - System refreshes the word list
 
 ### Exception Flow E2: Permission Denied
@@ -80,16 +68,6 @@ As an Admin, I want to deactivate a word using soft delete, so that I can remove
 - System displays error (MSG_W04_004): "Insufficient permissions to deactivate words."
 - System returns to word management
 
-### Exception Flow E3: Database Transaction Failure
-- Step 10: Database operation fails
-- System displays error (MSG_W04_005): "Failed to deactivate word. Please try again."
-- Word status remains unchanged
-- System logs the error for debugging
-
-### Exception Flow E4: Concurrent Modification
-- Step 10: Word was modified by another admin during the process
-- System displays error (MSG_W04_006): "Word has been modified. Please refresh and try again."
-- System refreshes word list with current data
 
 ## 4. MOCKUP DESIGN
 
