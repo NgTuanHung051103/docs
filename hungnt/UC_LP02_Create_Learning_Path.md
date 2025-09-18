@@ -29,56 +29,37 @@ As an Teacher, I want to create a new learning path with basic information (name
 ### Preconditions
 - The user must be authenticated with a valid JWT token
 - The user must have Teacher role permissions (verified by Auth & Role middleware)
-- MinIO service must be accessible for image upload
-- Database must be available and accessible
 - The Teacher must be on the Learning Paths Management screen
 
 ### Postconditions
 - A new learning path record is created in the database 
-- The learning path gets an auto-generated sequence number
-- The uploaded image is stored in MinIO with proper URL
 - Success message (MSG_1) is displayed to the Teacher
-- The Teacher is redirected back to the Learning Paths list or to the items management screen
+- The system closes the Create Learning Path dialog
 - The new learning path appears in the learning paths list
 
 ### Normal Sequence/Flow
 
 1. **The Teacher clicks the "Create New" button on the Learning Paths Management screen.**
 2. **The system opens a Create Learning Path dialog/form with the following fields:**
-   - Name (text input, required)
-   - Description (textarea, optional)
-   - Difficulty Level (dropdown: 1-5 stars, required)
-   - Image Upload (file input, required)
+   - Name
+   - Description
+   - Difficulty Level
+   - Image Upload
 
-3. **The Teacher enters the learning path name in the Name field.**
-4. **The system validates the name input in real-time (not empty, character limit) - shows (MSG_5) if empty, (MSG_7) if > 255 characters.**
+3. **The Teacher fills the fields and clicks on Save button.**
+4. **The system validates the form, if the error is found, it shows the respective error message:**
+   - If Name is empty, show (MSG_5)
+   - If Name exceeds 255 characters, show (MSG_7)
+   - If Difficulty Level is not selected, show (MSG_9)
+   - If Image is not uploaded, show (MSG_11)
+   - If Image file size > 5MB, show (MSG_12)
+   - If Image format is invalid, show (MSG_13)
+   - If Description exceeds 1000 characters, show (MSG_8)
+   - If Name already exists in database, show (MSG_6)
 
-5. **The Teacher enters a description for the learning path (optional).**
-6. **The system validates description length (max 1000 characters) - shows (MSG_8) if exceeded.**
-
-7. **The Teacher selects difficulty level from dropdown (1-5).**
-8. **The system validates the difficulty selection - shows (MSG_9) if not selected, (MSG_10) if invalid.**
-
-9. **The Teacher uploads an image file for the learning path.**
-10. **The system validates the uploaded file - shows (MSG_11) if missing, (MSG_12) if > 5MB, (MSG_13) if invalid format:**
-    - File format (JPEG, PNG, GIF, WebP)
-    - File size (max 5MB)
-    - File integrity
-
-11. **The Teacher clicks "Save" button to create the learning path.**
-12. **The system performs comprehensive validation - shows respective error messages if validation fails:**
-    - Name is not empty and unique in the system (MSG_5, MSG_6, MSG_7)
-    - Difficulty is between 1-5 (MSG_9, MSG_10)
-    - Image file meets requirements (MSG_11, MSG_12, MSG_13)
-    - Description length validation (MSG_8)
-
-13. **The system creates a database transaction and performs the following operations - shows (MSG_15) if any step fails:**
-    - Upload image to MinIO storage
-    - Create learning path record with default values (is_active = 1, auto sequence)
-    - Generate unique learning path ID
-
-14. **The system commits the transaction and displays success message (MSG_1).**
-15. **The system close modal and refresh new list.**
+5. **If validation passes, the system attempts to save the new record to the database.**
+   - If action save is successful, show (MSG_1) and close the dialog
+   - If action error occurs, show (MSG_15)
 
 ### Alternative Sequence/Flow
 
@@ -91,28 +72,11 @@ As an Teacher, I want to create a new learning path with basic information (name
 
 ### Exception Sequence/Flow
 
-**Steps 3-4: Name Validation Errors:**
-- If name is empty during real-time validation or submit: Display (MSG_5)
-- If name exceeds 255 characters during typing or submit: Display (MSG_7)
-
-**Steps 5-6: Description Validation Errors:**
-- If description exceeds 1000 characters during typing or submit: Display (MSG_8)
-
-**Steps 7-8: Difficulty Validation Errors:**
-- If no difficulty selected when clicking Save: Display (MSG_9)
-- If invalid difficulty value received by server: Display (MSG_10)
-
-**Steps 9-10: Image Upload Errors:**
-- If no image uploaded when clicking Save: Display (MSG_11)
-- If file size > 5MB during file selection or upload: Display (MSG_12)
-- If invalid format during file selection: Display (MSG_13)
-
-**Steps 11-14: System-level Errors:**
+**Step 5: System-level Errors:**
 - If network connection fails during form submit: Display (MSG_14)
-- If name already exists during server validation: Display (MSG_6)
-- If MinIO upload fails during step 13: Display (MSG_15)
-- If database error occurs during step 13: Display (MSG_15)
-- If transaction fails during step 13: Rollback all changes and display (MSG_15)
+- If database error occurs during save operation: Display (MSG_15)
+- If MinIO upload fails during save operation: Display (MSG_15)
+- If transaction fails during save operation: Rollback all changes and display (MSG_15)
 
 ---
 
@@ -139,11 +103,11 @@ As an Teacher, I want to create a new learning path with basic information (name
 │  ┌─────────────────────────────────────┐                                           │
 │  │ Select Difficulty ▼                 │                                           │
 │  └─────────────────────────────────────┘                                           │
-│     ⭐ 1 Star - Very Easy                                                           │
-│     ⭐⭐ 2 Stars - Easy                                                              │
-│     ⭐⭐⭐ 3 Stars - Medium                                                           │
-│     ⭐⭐⭐⭐ 4 Stars - Hard                                                            │
-│     ⭐⭐⭐⭐⭐ 5 Stars - Very Hard                                                       │
+│   Very Easy                                                           │
+│     Easy                                                              │
+│     Medium                                                           │
+│    Hard                                                            │
+│     Very Hard                                                       │
 │                                                                                     │
 │  Image: *                                                                           │
 │  ┌─────────────────────────────────────────────────────────────────────────────┐   │
@@ -174,11 +138,10 @@ As an Teacher, I want to create a new learning path with basic information (name
 - **Save Button:** Creates learning path and returns to list
 
 ### Form Validation Behavior:
-- **Real-time validation:** Show validation errors immediately when user leaves field
-- **Submit validation:** Prevent form submission if any required field is invalid
-- **Visual indicators:** Red border for invalid fields, green checkmark for valid fields
-- **Error messages:** Display specific error messages below each field
-- **Progress indicator:** Show upload progress for image files
+- **Submit validation:** Validate all fields when Save button is clicked
+- **Visual indicators:** Red border for invalid fields after validation
+- **Error messages:** Display specific error messages below each field after Save is clicked
+- **Progress indicator:** Show upload progress for image files during save operation
 
 ---
 
@@ -208,37 +171,39 @@ As an Teacher, I want to create a new learning path with basic information (name
 
 **MSG_5** - Hiển thị khi:
 - User để trống trường Name và click Save
+- Step 4 validation
 
 **MSG_6** - Hiển thị khi:
 - Tên learning path đã tồn tại trong database (case-insensitive check)
-- Server validation trước khi insert database
+- Step 4 validation - server validation trước khi insert database
 
 **MSG_7** - Hiển thị khi:
-- User nhập tên vượt quá 255 ký tự
+- User nhập tên vượt quá 255 ký tự và click Save
+- Step 4 validation
 
 **MSG_8** - Hiển thị khi:
-- User nhập description vượt quá 1000 ký tự
-- Real-time validation với character counter
+- User nhập description vượt quá 1000 ký tự và click Save
+- Step 4 validation
 
 **MSG_9** - Hiển thị khi:
 - User không chọn difficulty level và click Save
-- Required field validation
+- Step 4 validation - required field validation
 
 **MSG_10** - Hiển thị khi:
 - Server receive invalid difficulty value (not 1-5)
-- Client-side manipulation protection
+- Step 4 validation - client-side manipulation protection
 
 **MSG_11** - Hiển thị khi:
 - User không upload image và click Save
-- Required field validation
+- Step 4 validation - required field validation
 
 **MSG_12** - Hiển thị khi:
-- File size vượt quá 5MB limit
-- Client-side validation ngay khi select file
+- File size vượt quá 5MB limit và click Save
+- Step 4 validation
 
 **MSG_13** - Hiển thị khi:
-- File format không phải JPEG, PNG, GIF, WebP
-- MIME type validation
+- File format không phải JPEG, PNG, GIF, WebP và click Save
+- Step 4 validation - MIME type validation
 
 **MSG_14** - Hiển thị khi:
 - Network connection error khi submit form
