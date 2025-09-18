@@ -91,7 +91,7 @@ Hãy tạo use case [UC_CODE]: [Use Case Name] cho nghiệp vụ [Business Funct
 
 **Ví dụ:**
 **Steps 3-4: Name Validation Errors:**
-- If name is empty during real-time validation: Display (MSG5)
+- If name is empty when validation: Display (MSG5)
 
 **Steps 11-14: System-level Errors:**
 - If network connection fails: Display (MSG14)
