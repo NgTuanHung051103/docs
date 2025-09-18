@@ -40,7 +40,7 @@ As an Teacher, I want to update an existing learning path's information (name, d
 
 ## Normal Sequence/Flow
 
-1. **The Teacher clicks the "Edit Information" for a specific learning path in the Learning Paths Management table.**
+1. **The Teacher clicks the "Edit Information" button (pencil icon) for a specific learning path in the Learning Paths Management table.**
 
 2. **The system retrieves the current learning path data and opens an Update Learning Path dialog/form pre-filled with existing values:**
    - Name
@@ -238,6 +238,7 @@ As an Teacher, I want to update an existing learning path's information (name, d
 
 ### Required API Endpoints
 - `PUT /api/learning-path/edit/:id` - Update existing learning path with optional image upload (multipart/form-data)
+- `PUT /api/learning-path/:id/update-status` - Toggle learning path status (Active/Inactive). Used for quick status changes.
 
 ### API Request Contract
 ```javascript
@@ -276,6 +277,7 @@ sequenceDiagram
   participant T as Teacher
   participant FE as Frontend UI
   participant API as API Gateway
+  participant Upload as Upload Middleware
   participant Auth as Auth Middleware
   participant FileVal as File Validation
   participant C as LearningPathController
@@ -294,37 +296,43 @@ sequenceDiagram
   FE-->>T: Show pre-filled form
 
   T->>FE: Fill fields and click "Save Changes"
-  FE->>API: PUT /api/learning-path/edit/:id (JWT, multipart form data)
-  API->>Auth: verifyToken(), checkTeacherRole()
+  FE->>API: PUT /api/learning-path/edit/:id (multipart form data)
+
+  %% Middleware chain executed in router: learningPathUpload -> jwtMiddleware -> teacherOnly -> controller
+  API->>Upload: learningPathUpload(req)
+  Upload-->>API: files attached / upload error
+  API->>Auth: jwtMiddleware(req) -> verifyToken()
   Auth-->>API: OK / 401
-  
+  API->>Auth: teacherOnly(req) -> checkTeacherRole()
+  Auth-->>API: OK / 403
+
   alt Image file provided
     API->>FileVal: validateImageFile(req.files)
     FileVal-->>API: OK / validation error
   end
-  
+
   API->>C: updateLearningPath(req, res)
   C->>R: findById(id)
   R->>DB: SELECT * FROM learning_paths WHERE id=?
   DB-->>R: existingPath
   R-->>C: existingPath (or null)
-  
+
   alt Learning path exists
     C->>C: sanitizeLearningPathData(req.body)
     C->>C: validateLearningPathData(sanitizedData, true)
-    
+
     alt Name changed
       C->>R: findByName(sanitizedData.name)
       R->>DB: SELECT * FROM learning_paths WHERE name=? AND id!=?
       DB-->>R: duplicatePath (or null)
       R-->>C: duplicatePath
     end
-    
+
     alt New image uploaded
       C->>MinIO: uploadToMinIO(image, "learning-paths")
       MinIO-->>C: imageUrl
     end
-    
+
     C->>R: update(id, updateData)
     R->>DB: UPDATE learning_paths SET ... WHERE id=?
     DB-->>R: updatedPath
@@ -355,6 +363,8 @@ classDiagram
 
   class LearningPathController {
     +updateLearningPath(req, res)
+    +toggleStatus(req, res)
+    +sanitizeLearningPathData(data)
     +validateLearningPathData(data, isUpdate)
   }
 
