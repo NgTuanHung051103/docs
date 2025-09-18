@@ -2,11 +2,11 @@
 
 ## TỔNG QUAN HỆ THỐNG
 
-Hệ thống quản lý lộ trình học tập tích hợp cho phép admin tạo và quản lý các lộ trình học bao gồm readings và games, với hệ thống từ vựng hỗ trợ, đồng thời cung cấp trải nghiệm học tập có tổ chức cho học sinh.
+Hệ thống quản lý lộ trình học tập tích hợp cho phép teacher tạo và quản lý các lộ trình học bao gồm readings và games, với hệ thống từ vựng hỗ trợ, đồng thời cung cấp trải nghiệm học tập có tổ chức cho học sinh.
 
 ---
 
-## 1. QUẢN LÝ DANH SÁCH LỘ TRÌNH (ADMIN)
+## 1. QUẢN LÝ DANH SÁCH LỘ TRÌNH (TEACHER)
 
 ### Mục đích
 Hiển thị tất cả lộ trình học tập với khả năng CRU (Create, Read, Update - không có Delete)
@@ -44,50 +44,125 @@ Hiển thị tất cả lộ trình học tập với khả năng CRU (Create, R
 
 ---
 
-## 2. QUẢN LÝ ITEMS TRONG LỘ TRÌNH (ADMIN)
+## 2. QUẢN LÝ ITEMS TRONG LỘ TRÌNH (TEACHER)
 
 ### Mục đích
-Thêm/xóa readings và games vào lộ trình cụ thể với quản lý thứ tự thông minh
+Hiển thị, chỉnh sửa và quản lý items (readings và games) trong lộ trình cụ thể với giao diện table có tìm kiếm và filter
 
-### Giao diện
-Dialog hiển thị categories → chọn category → hiển thị readings có sẵn
+### Giao diện chính
+Màn hình "Edit learning path" hiển thị table items theo category grouping với:
+- Header: Order number, Image, Name, Type, Difficult, Status, Action
+- Items được nhóm theo category với header category rõ ràng
+- Search box và Filter dropdown ở phía trên table
+- **Button "Add Reading" tổng quát** ở phía trên table để thêm reading từ bất kỳ category nào
+- **Button "Add Reading"** ở cạnh tên mỗi category để thêm reading chỉ từ category cụ thể đó
 
-### Hiển thị thông tin readings
-image, title, difficulty_level, active status
+### Hiển thị thông tin items trong table
+- **Order number:** sequence_order của item trong lộ trình
+- **Image:** Hình đại diện của reading/game
+- **Name:** Tên của reading hoặc game
+- **Type:** "Reading" hoặc "Game" 
+- **Difficult:** difficulty_level (1-5) hoặc cấp độ khó
+- **Status:** "Active" hoặc "Deactive"
+- **Action:** Các button hành động tùy theo loại item
 
 ### Chức năng tìm kiếm và lọc
-- **Search:** Theo title (tìm kiếm text)
-- **Filter:**
-  - Độ khó (difficulty_level): 1-5
-  - Trạng thái (is_active): Active/Inactive
-  - Category: Dropdown danh sách categories
-- **Sort:** Theo title, difficulty_level, active status
-- **Pagination:** Phân trang cho danh sách readings
-- **Single Query:** Tất cả tham số chung 1 query
+- **Search:** Tìm kiếm theo name (title) của readings và games
+- **Filter By dropdown:**
+  - Độ khó (difficulty_level): "All", "1", "2", "3", "4", "5"
+  - Trạng thái (is_active): "All", "Active", "Inactive" 
+  - Loại item: "All", "Reading", "Game"
+  - Category: "All" + dropdown danh sách categories
+- **Sort:** Theo name, difficulty_level, status, sequence_order
+- **Single Query:** Tất cả search/filter/sort parameters trong 1 API call
 
-### Hiển thị trạng thái readings
-- **Reading chưa có trong lộ trình nào:** màu bình thường
-- **Reading đã có trong lộ trình khác:** màu khác + thông báo thuộc lộ trình nào
-- **Reading đã có trong lộ trình hiện tại:** màu đặc biệt + đánh dấu đã chọn
+### Action Buttons cho từng loại item
+
+#### Actions cho Reading items:
+- **View Reading:** Redirect sang màn hình chi tiết reading (sử dụng screen có sẵn)
+- **View Student Stats:** Hiển thị số lượt học sinh đã làm bài reading này
+- **Remove:** Xóa reading khỏi lộ trình (với validation)
+- **Add Game:** Tạo game mới với prerequisite_reading_id là reading này
+
+#### Actions cho Game items:
+- **Edit Game:** Redirect sang màn hình chỉnh sửa game
+- **Remove Game:** Xóa game khỏi lộ trình (với validation)
+
+### Logic thêm game mới từ reading
+- **Vị trí:** Game mới được thêm ở cuối cùng trong nhóm games cùng prerequisite_reading_id
+- **Sequence order:** Tự động tính toán để đặt sau game cuối cùng của cùng reading
+- **Ví dụ:**
+  ```
+  Reading A (seq: 1) 
+  ├── Game A1 (seq: 2, prerequisite: Reading A)
+  ├── Game A2 (seq: 3, prerequisite: Reading A) 
+  └── Game A3 (seq: 4, prerequisite: Reading A) ← Game mới thêm vào đây
+  Reading B (seq: 5)
+  ```
+
+### Drag & Drop Logic cho Games
+- **Ràng buộc:** Games chỉ có thể di chuyển trong nhóm cùng prerequisite_reading_id
+- **Không được:** Kéo game sang reading khác hoặc ra ngoài nhóm
+- **Tự động update:** sequence_order của tất cả games trong nhóm sau khi di chuyển
+- **Visual feedback:** Hiển thị drop zones hợp lệ khi đang kéo game
+
+### Chức năng Add Reading với Modal Selection
+
+#### 1. Button "Add Reading" Tổng Quát
+- **Vị trí:** Đặt ở phía trên table, cạnh Search box và Filter dropdown
+- **Chức năng:** Mở modal để thêm reading từ bất kỳ category nào vào lộ trình
+- **Modal Layout:** Chia 2 phần trái-phải
+  - **Bên trái:** Danh sách tất cả categories trong hệ thống
+  - **Bên phải:** Danh sách readings thuộc category đang được chọn
+- **Behavior:** Khi chọn category bên trái, button category đổi màu highlight và bên phải cập nhật danh sách readings tương ứng
+
+#### 2. Button "Add Reading" Per Category  
+- **Vị trí:** Đặt cạnh tên category trong category header (ví dụ: "Animals Category [+ Add Reading]")
+- **Chức năng:** Mở modal để thêm reading chỉ từ category cụ thể đó
+- **Modal Layout:** Tương tự modal tổng quát nhưng có sự khác biệt:
+  - **Bên trái:** Chỉ hiển thị category được chọn sẵn (đã highlight, không thể chọn category khác)
+  - **Bên phải:** Danh sách readings thuộc category đó
+- **Behavior:** Category đã được pre-selected và không thể thay đổi
+
+#### Giao diện Modal Add Reading
+- **Structure:** Modal chia 2 cột với tỷ lệ 30%-70%
+- **Bên trái - Categories List:**
+  - Hiển thị danh sách categories dạng vertical list
+  - Category được chọn có background highlight (màu khác)
+  - Có thể scroll nếu danh sách categories dài
+  - Click vào category để chọn (chỉ áp dụng với modal tổng quát)
+- **Bên phải - Readings List:**
+  - Hiển thị readings của category đang chọn dạng grid hoặc list
+  - Mỗi reading hiển thị: image, title, difficulty_level, status
+  - Có search box riêng để tìm kiếm trong readings
+  - Có filter riêng cho readings (difficulty, status)
+  - Pagination cho danh sách readings
+- **Modal Actions:**
+  - Button "Cancel": Đóng modal không làm gì
+  - Button "Select": Thêm readings đã chọn vào lộ trình
+
+### Hiển thị Category Grouping trong Table
+- **Category headers:** Hiển thị tên category như "Name of category" với arrow icon
+- **Items grouping:** Tất cả readings và games thuộc category được nhóm lại
+- **Visual separation:** Có đường phân cách hoặc background khác nhau giữa categories
+- **Add Reading button per category:** Mỗi category header có button "Add Reading" riêng
 
 ### Ràng buộc Category Grouping
 - **Quy tắc chính:** Các reading cùng category phải nhóm liền kề theo sequence_order
 - **Cho phép:** Nhiều category khác nhau trong cùng 1 lộ trình
 - **Validation:** Không được có reading cùng category bị tách rời
 
-**Ví dụ hợp lệ:**
+**Ví dụ cấu trúc hiển thị:**
 ```
-✅ ĐÚNG:
-- Reading 1: "Con mèo" (category: Animals, sequence_order: 1)
-- Reading 2: "Con chó" (category: Animals, sequence_order: 2)  
-- Reading 3: "Con gà" (category: Animals, sequence_order: 3)
-- Reading 4: "Gia đình tôi" (category: Family, sequence_order: 4)
-- Reading 5: "Bố mẹ tôi" (category: Family, sequence_order: 5)
+📁 Animals Category
+├── 1. Reading: "Con mèo" (Reading, difficulty: 2, Active)
+├── 2. Game: "Animal Game 1" (Game, difficulty: 2, Active) 
+├── 3. Game: "Animal Game 2" (Game, difficulty: 2, Deactive)
+└── 4. Reading: "Con chó" (Reading, difficulty: 2, Active)
 
-❌ SAI:
-- Reading 1: "Con mèo" (category: Animals, sequence_order: 1)
-- Reading 2: "Gia đình tôi" (category: Family, sequence_order: 2)
-- Reading 3: "Con chó" (category: Animals, sequence_order: 3) ❌ - Animals bị tách rời
+📁 Family Category  
+├── 5. Reading: "Gia đình tôi" (Reading, difficulty: 3, Active)
+└── 6. Reading: "Bố mẹ tôi" (Reading, difficulty: 3, Active)
 ```
 
 ### Quản lý Sequence Order và Movement Logic
@@ -115,14 +190,27 @@ image, title, difficulty_level, active status
   - Có reading khác trước game: Set prerequisite_reading_id = reading gần nhất
   - Không có reading nào: Set prerequisite_reading_id = null
 
-### Logic bổ sung
-- Query LearningPathItem join LearningPath xác định reading thuộc lộ trình nào
-- Query StudentReading check item đã được làm chưa
-- Response API bao gồm: existing_paths: [{id, name}], has_student_progress: boolean
+### Logic Add Reading vào Lộ Trình
+
+#### Auto-positioning Logic
+- **Reading mới:** Tự động đặt ở cuối cùng trong nhóm category tương ứng
+- **Nếu category chưa có trong lộ trình:** Đặt reading ở cuối cùng của toàn bộ lộ trình
+- **Sequence order calculation:** Tính toán tự động để duy trì category grouping
+
+#### Multi-selection Support
+- **Cho phép:** Chọn multiple readings cùng lúc từ modal
+- **Validation:** Kiểm tra readings đã có trong lộ trình hay chưa
+- **Bulk insert:** Thêm tất cả readings được chọn với sequence order phù hợp
+
+### Logic bổ sung  
+- Query LearningPathItem join các bảng liên quan để có đầy đủ thông tin display
+- Count StudentReading để có student_count cho từng item
+- Validate category grouping khi thực hiện các thao tác CRUD
+- Check readings availability và existing paths khi hiển thị modal
 
 ---
 
-## 3. TẠO GAME TRONG LỘ TRÌNH (ADMIN)
+## 3. TẠO GAME TRONG LỘ TRÌNH (TEACHER)
 
 ### Mục đích
 Thêm game vào lộ trình học với quản lý từ vựng tích hợp
@@ -167,7 +255,7 @@ INDEX: (game_id, sequence_order) - Tối ưu query
 
 ### Nghiệp vụ quản lý từ vựng
 
-#### 1. Quản lý kho từ vựng (Admin)
+#### 1. Quản lý kho từ vựng (Teacher)
 - **Create:** Thêm từ với đầy đủ thông tin (word, image, level, definition, pronunciation, note, type)
 - **Read:** Search/filter/sort/pagination
   - Search: word, definition
@@ -176,7 +264,7 @@ INDEX: (game_id, sequence_order) - Tối ưu query
 - **Update:** Cập nhật tất cả thông tin từ
 - **Soft Delete:** Deactive từ (kiểm tra usage trong games)
 
-#### 2. Import từ vựng từ Excel (Admin)
+#### 2. Import từ vựng từ Excel (Teacher)
 **Mục đích:** Nhập nhiều từ vựng cùng lúc từ file Excel
 
 **File Excel mẫu (words_template.xlsx):**
@@ -207,9 +295,9 @@ INDEX: (game_id, sequence_order) - Tối ưu query
      ]
    }
    ```
-5. **Admin action:** 
-   - **Cancel:** Hủy import
-   - **Proceed:** Import chỉ những từ không trùng
+5. **Teacher action:** 
+  - **Cancel:** Hủy import
+  - **Proceed:** Import chỉ những từ không trùng
 
 **Validation Rules:**
 - File max 10MB
@@ -220,11 +308,16 @@ INDEX: (game_id, sequence_order) - Tối ưu query
 - Word không được trống
 - Maximum 1000 words per file
 
-#### 3. Gán từ vào game (Admin)
+#### 3. Gán từ vào game (Teacher)
 - Hiển thị danh sách từ với search/filter
+- **Auto-filter theo difficulty:** Tự động filter từ vựng có `level <= learning_path.difficulty_level` của lộ trình chứa game
 - Thêm/xóa từ khỏi game với sequence_order
 - Hiển thị từ vựng trong game theo thứ tự
 - Drag & drop sắp xếp thứ tự từ
+- **Logic filter từ vựng:**
+  - Lấy `difficulty_level` từ learning path chứa game hiện tại
+  - Chỉ hiển thị words có `level = difficulty_level`
+  - Teacher có thể override filter nếu cần thiết
 
 #### 4. Validation rules
 - Word không trống, unique
@@ -314,6 +407,53 @@ Student click vào game → trả về chi tiết game với từ vựng
 - **Error handling:** Chuẩn với proper HTTP status codes
 - **Pagination:** Với total_record, total_page, records
 - **Security:** Input sanitization và file validation
+
+### Logic Filtering Tự Động Theo Difficulty Level
+
+#### 1. Endpoint: POST /teacher/learning-paths/:pathId/available-readings
+```javascript
+// Tự động áp dụng filter difficulty khi lấy readings cho lộ trình
+async function getAvailableReadings(req, res) {
+  const learningPath = await LearningPath.findByPk(pathId);
+  const maxDifficulty = learningPath.difficulty_level;
+  
+  // Auto-apply difficulty filter
+  const whereClause = {
+    // Đổi toán tử so sánh thành bằng (=) maxDifficulty
+    difficulty_level: maxDifficulty
+  };
+  
+  // Admin vẫn có thể override bằng cách pass difficulty_level trong request
+  if (req.body.difficulty_level !== undefined) {
+    whereClause.difficulty_level = req.body.difficulty_level;
+  }
+}
+```
+
+#### 2. Endpoint: GET /teacher/games/:gameId/available-words
+```javascript
+// Tự động filter từ vựng theo difficulty của lộ trình chứa game
+async function getAvailableWords(req, res) {
+  const game = await Game.findByPk(gameId, {
+    include: [{
+      model: LearningPathItem,
+      include: [{ model: LearningPath }]
+    }]
+  });
+  
+  const maxLevel = game.learningPathItem.learningPath.difficulty_level;
+  
+  const whereClause = {
+    difficulty_level: maxDifficulty
+    is_active: 1
+  };
+}
+```
+
+#### 3. Business Rules cho Difficulty Filtering
+- **Default behavior:** Luôn áp dụng auto-filter theo difficulty của lộ trình
+- **Override capability:** Admin có thể override bằng cách specify difficulty_level/level trong request
+- **Warning system:** Hiển thị cảnh báo nếu admin cố gắng thêm item khó hơn lộ trình
 
 ---
 
