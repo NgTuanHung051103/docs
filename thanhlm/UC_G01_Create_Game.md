@@ -19,26 +19,20 @@ As an Admin, I want to create a new game with name, type, and description for a 
 **Preconditions**
 - The user must be authenticated with an Admin account and logged into the system
 - The user must be in the Learning Path Edit mode for a specific learning path
-- A reading item must exist in the learning path to serve as prerequisite for the new game
-- The system must be connected to the database
 
 **Postconditions**
 - A new game record is created in the database with is_active = false by default
-- A new LearningPathItem is created linking the game to the current learning path
-- The game is positioned after the last game with the same prerequisite_reading_id
-- The sequence_order is auto-calculated to maintain proper learning path ordering
-- The user receives a success notification (MSG_1)
+- The user receives a success game creating (MSG_1)
 - The system returns to the Learning Path Edit screen with the new game displayed
-- The game is ready for word assignment through the Edit Game interface
 
 ### 2. NORMAL SEQUENCE/FLOW
 
 1. **The Admin is editing a learning path and clicks the "Add Game" button next to a specific reading item.**
-2. **The system opens a Create Game dialog/modal with the following form fields:**
-   - Game Name (text input, required, max 255 characters)
-   - Game Type (dropdown, required) - options: Puzzle, Memory, Quiz, Matching
-   - Description (textarea, optional, max 1000 characters)
-3. **The Admin enters the game name and selects a game type from the dropdown.**
+2. **The system opens a Create Game form with the following form fields:**
+   - Game Name
+   - Game Type 
+   - Description
+3. **The Admin fill the fields.**
 4. **The system validates the name input in real-time:**
    - Shows (MSG_5) if field is empty
    - Shows (MSG_7) if exceeds 255 characters
@@ -53,8 +47,6 @@ As an Admin, I want to create a new game with name, type, and description for a 
     - Description: ≤1000 chars (if provided)
 9. **The system starts a database transaction and performs the following operations:**
     - Creates new Game record with is_active = false and prerequisite_reading_id set to the selected reading
-    - Calculates the optimal sequence_order position (after the last game with same prerequisite_reading_id)
-    - Creates new LearningPathItem record linking the game to the current learning path
     - Commits the transaction if all operations succeed
 10. **The system displays success message (MSG_1) and closes the dialog.**
 11. **The system refreshes the Learning Path Edit screen to show the newly created game in the correct position.**
