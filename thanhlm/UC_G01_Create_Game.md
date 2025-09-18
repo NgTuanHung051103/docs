@@ -279,7 +279,7 @@ sequenceDiagram
     participant Gateway as API Gateway
     participant Auth as Auth Middleware
     participant Controller as Game Controller
-    participant Service as Game Service
+    participant Repo as Game Repo
     participant DB as Database
 
     Admin->>Frontend: Fill game creation form and click Save
@@ -288,15 +288,15 @@ sequenceDiagram
     Auth->>Controller: Pass validated request
     
     Controller->>Controller: Validate input data
-    Controller->>Service: createGameForReading(gameData, readingId, pathId)
+    Controller->>Repo: createGameForReading(gameData, readingId, pathId)
     
-    Service->>DB: BEGIN TRANSACTION
-    Service->>DB: CREATE Game record (prerequisite_reading_id)
-    Service->>DB: Calculate sequence_order position
-    Service->>DB: CREATE LearningPathItem record
-    Service->>DB: COMMIT TRANSACTION
+    Repo->>DB: BEGIN TRANSACTION
+    Repo->>DB: CREATE Game record (prerequisite_reading_id)
+    Repo->>DB: Calculate sequence_order position
+    Repo->>DB: CREATE LearningPathItem record
+    Repo->>DB: COMMIT TRANSACTION
     
-    Service-->>Controller: Return created game data
+    Repo-->>Controller: Return created game data
     Controller-->>Gateway: Success response (201)
     Gateway-->>Frontend: Game created successfully
     Frontend-->>Admin: Display success message and refresh view
@@ -314,7 +314,7 @@ classDiagram
         +handleErrors(error)
     }
     
-    class GameService {
+    class GameRepo {
         -dbConnection: Connection
         -transactionManager: TransactionManager
         +createGameForReading(gameData, readingId, pathId)
@@ -354,10 +354,10 @@ classDiagram
         +authorize(req, res, next)
     }
     
-    GameController --> GameService : uses
+    GameController --> GameRepo : uses
     GameController --> AuthMiddleware : protected by
-    GameService --> Game : creates
-    GameService --> LearningPathItem : creates
+    GameRepo --> Game : creates
+    GameRepo --> LearningPathItem : creates
     Game --> LearningPathItem : linked through
 ```
 
