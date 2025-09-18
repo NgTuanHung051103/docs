@@ -24,68 +24,45 @@ None
 The Teacher clicks on the "Edit Information" button in the column Action of Learning Paths Management screen for a specific learning path.
 
 ### Description
-As an Teacher, I want to update an existing learning path's information (name, description, difficulty, image), so that I can maintain and improve the learning content while ensuring student progress is preserved.
+As an Teacher, I want to update an existing learning path's information (name, description, difficulty, image, status), so that I can maintain and improve the learning content while ensuring student progress is preserved.
 
 ### Preconditions
-- The user must be authenticated with a valid JWT token
-- The user must have Teacher role permissions (verified by Auth & Role middleware)
-- MinIO service must be accessible for image upload (if image is updated)
-- Database must be available and accessible
+- The teacher must be authenticated with a valid JWT token
+- The teacher must have Teacher role permissions (verified by Auth & Role middleware)
 - The learning path must exist in the system
-- The Teacher must be on the Learning Paths Management screen
+- The teacher must be on the Learning Paths Management screen
 
 ### Postconditions
 - The learning path record is updated in the database with new information
-- If image is updated, the new image is stored in MinIO with proper URL
 - Success message (MSG_1) is displayed to the Teacher
-- The Teacher is redirected back to the Learning Paths list
+- The form/dialog is closed.
 - The updated learning path appears with new information in the list
-- If learning path is deactivated, check student progress constraints
 
 ## Normal Sequence/Flow
 
-1. **The Teacher clicks the "Edit Information" button (pencil icon) for a specific learning path in the Learning Paths Management table.**
+1. **The Teacher clicks the "Edit Information" for a specific learning path in the Learning Paths Management table.**
 
 2. **The system retrieves the current learning path data and opens an Update Learning Path dialog/form pre-filled with existing values:**
-   - Name (text input, required, current value displayed)
-   - Description (textarea, optional, current value displayed)
-   - Difficulty Level (dropdown: 1-5 stars, required, current value selected)
-   - Image Upload (file input, optional, current image thumbnail displayed)
-   - Active Status (toggle/dropdown, current status selected)
+   - Name
+   - Description
+   - Difficulty Level
+   - Image Upload
+   - Active Status
 
-3. **The Teacher modifies the learning path name in the Name field.**
-4. **The system validates the name input in real-time (not empty, character limit, uniqueness except current record) - shows (MSG_5) if empty, (MSG_7) if > 255 characters, (MSG_6) if name exists in other records.**
+3. **The Teacher fills the fields and clicks on Save button.**
 
-5. **The Teacher updates the description for the learning path (optional).**
-6. **The system validates description length (max 1000 characters) - shows (MSG_8) if exceeded.**
+4. **The system validates the form, if the error is found, it shows the respective error message:**
+   - If Name is empty, show (MSG_5)
+   - If Name exceeds 255 characters, show (MSG_7)
+   - If Difficulty Level is not selected, show (MSG_9)
+   - If Image file size > 5MB, show (MSG_12)
+   - If Image format is invalid, show (MSG_13)
+   - If Description exceeds 1000 characters, show (MSG_8)
+   - If Name already exists in database (except current record), show (MSG_6)
 
-7. **The Teacher changes difficulty level from dropdown (1-5).**
-8. **The system validates the difficulty selection - shows (MSG_9) if not selected, (MSG_10) if invalid.**
-
-9. **The Teacher uploads a new image file for the learning path (optional).**
-10. **The system validates the uploaded file if provided - shows (MSG_11) if invalid format, (MSG_12) if > 5MB, (MSG_13) if invalid format:**
-    - File format (JPEG, PNG, GIF, WebP)
-    - File size (max 5MB)
-    - File integrity
-
-11. **The Teacher changes the active status (Active/Inactive).**
-12. **If Teacher selects Inactive status, the system checks student progress - shows (MSG_16) if students have accessed this learning path and prevents deactivation.**
-
-13. **The Teacher clicks "Save" button to update the learning path.**
-14. **The system performs comprehensive validation - shows respective error messages if validation fails:**
-    - Name is not empty and unique except current record (MSG_5, MSG_6, MSG_7)
-    - Difficulty is between 1-5 (MSG_9, MSG_10)
-    - Image file meets requirements if provided (MSG_11, MSG_12, MSG_13)
-    - Description length validation (MSG_8)
-    - Student progress validation for status change (MSG_16)
-
-15. **The system creates a database transaction and performs the following operations - shows (MSG_15) if any step fails:**
-    - Upload new image to MinIO storage (if provided)
-    - Update learning path record with modified values
-    - Keep existing image URL if no new image provided
-
-16. **The system commits the transaction and displays success message (MSG_1).**
-17. **The system closes modal and refreshes the learning paths list with updated information.**
+5. **If validation passes, the system attempts to save the updated record to the database.**
+   - If action save is successful, show (MSG_1) and close the dialog
+   - If action error occurs, show (MSG_15)
 
 ## Alternative Sequence/Flow
 
@@ -93,42 +70,13 @@ As an Teacher, I want to update an existing learning path's information (name, d
 - At any step: Teacher clicks "Cancel" button
 - System discards all input changes
 - System returns to Learning Paths Management screen with original data
-- No database changes are made
 - No success or error message displayed
-
-**Alternative 2 - Update Without Image Change:**
-- Steps 1-8: Normal flow until image upload
-- Step 9: Teacher does not upload new image
-- Step 10: System skips image validation
-- Steps 11-17: Continue with normal flow using existing image URL
 
 ## Exception Sequence/Flow
 
-**Steps 3-4: Name Validation Errors:**
-- If name is empty during real-time validation or submit: Display (MSG_5)
-- If name exceeds 255 characters during typing or submit: Display (MSG_7)
-- If name already exists in another learning path: Display (MSG_6)
-
-**Steps 5-6: Description Validation Errors:**
-- If description exceeds 1000 characters during typing or submit: Display (MSG_8)
-
-**Steps 7-8: Difficulty Validation Errors:**
-- If no difficulty selected when clicking Save: Display (MSG_9)
-- If invalid difficulty value received by server: Display (MSG_10)
-
-**Steps 9-10: Image Upload Errors:**
-- If file size > 5MB during file selection or upload: Display (MSG_12)
-- If invalid format during file selection: Display (MSG_13)
-
-**Steps 11-12: Status Change Validation Errors:**
-- If trying to deactivate learning path with student progress: Display (MSG_16)
-
-**Steps 13-16: System-level Errors:**
+**Step 5: System-level Errors:**
 - If network connection fails during form submit: Display (MSG_14)
 - If learning path not found during update: Display (MSG_17)
-- If MinIO upload fails during step 15: Display (MSG_15)
-- If database error occurs during step 15: Display (MSG_15)
-- If transaction fails during step 15: Rollback all changes and display (MSG_15)
 
 ## Mockup Design
 
@@ -153,20 +101,24 @@ As an Teacher, I want to update an existing learning path's information (name, d
 │                                                                                     │
 │  Difficulty Level: *                                                                │
 │  ┌─────────────────────────────────────┐                                           │
-│  │ ⭐⭐ 2 Stars - Easy ▼               │                                           │
+│  │ Level 2 ▼                           │                                           │
 │  └─────────────────────────────────────┘                                           │
+│   Level 1                                                          │
+│   Level 2                                                          │
+│   Level 3                                                          │
+│   Level 4                                                          │
+│   Level 5                                                          │
 │                                                                                     │
-│  Current Image:                                                                     │
-│  ┌─────────────────────────────────────────────────────────────────────────────┐   │
-│  │ [📷 basic_english_path.jpg] (1.2 MB) ✅                                     │   │
-│  └─────────────────────────────────────────────────────────────────────────────┘   │
-│                                                                                     │
-│  Upload New Image: (Optional)                                                       │
+│  Image: (Optional)                                                                  │
 │  ┌─────────────────────────────────────────────────────────────────────────────┐   │
 │  │                          📁 Choose File                                     │   │
-│  │                    [Drag & Drop or Click to Upload]                        │   │
-│  │                     Supported: JPEG, PNG, GIF, WebP                        │   │
-│  │                          Max size: 5MB                                     │   │
+│  │                                                                          │   │
+│  │                                                                           │   │
+│  │                                                                               │   │
+│  └─────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                     │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐   │
+│  │ 📷 [basic_english_path.jpg] (1.2 MB) ✅ Current Image                      │   │
 │  └─────────────────────────────────────────────────────────────────────────────┘   │
 │                                                                                     │
 │  Status: *                                                                          │
@@ -183,30 +135,19 @@ As an Teacher, I want to update an existing learning path's information (name, d
 └─────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### UI ELEMENTS DESCRIPTION
-
-**Input Fields:**
+### UI Elements Description:
 - **Name Field:** Required text input with validation, max 255 characters, pre-filled with current value
 - **Description Field:** Optional textarea, max 1000 characters with character counter, pre-filled with current value
-- **Difficulty Dropdown:** Required selection with visual star representation, current difficulty pre-selected
-- **Current Image Display:** Shows thumbnail of existing image with filename and size
-- **New Image Upload Area:** Optional drag & drop file upload with preview, validation indicators
+- **Difficulty Dropdown:** Required selection with Level 1-5 options, current difficulty pre-selected
+- **Image Upload Area:** Optional drag & drop file upload with preview, validation indicators
+- **Current Image Display:** Shows existing image filename and size below upload area
 - **Status Dropdown:** Required selection between Active/Inactive, current status pre-selected
-
-**Buttons & Controls:**
 - **Cancel Button:** Discards all changes and returns to learning paths list
 - **Save Changes Button:** Updates learning path and returns to list
 
-**Display Elements:**
-- **Current Image Thumbnail:** Shows existing image with filename and size information
-- **Warning Note:** Displays information about deactivation consequences
-
-**Form Validation Behavior:**
-- **Real-time validation:** Show validation errors immediately when user leaves field
-- **Submit validation:** Prevent form submission if any required field is invalid
-- **Visual indicators:** Red border for invalid fields, green checkmark for valid fields
-- **Error messages:** Display specific error messages below each field by toast
-- **Progress indicator:** Show upload progress for new image files
+### Form Validation Behavior:
+- **Submit validation:** Validate all fields when Save Changes button is clicked
+- **Error messages:** Display specific error messages with toast notifications after Save is clicked
 - **Student progress check:** Validate before allowing status change to inactive
 
 ## Error Messages & Validation Messages
@@ -221,10 +162,8 @@ As an Teacher, I want to update an existing learning path's information (name, d
 - **MSG_9:** "Difficulty level is required"
 - **MSG_10:** "Difficulty level must be between 1 and 5"
 - **MSG_12:** "Image file size cannot exceed 5MB"
-- **MSG_13:** "Invalid image file format. Only JPEG, PNG, GIF, WebP are allowed"
+- **MSG_13:** "Image must be JPG or JPEG or PNG or GIF or WebP file"
 - **MSG_14:** "Connection error. Please try again later"
-- **MSG_15:** "Server error occurred while processing request"
-- **MSG_16:** "Cannot deactivate: Students have already accessed this learning path"
 - **MSG_17:** "Learning path not found"
 
 ### When These Messages Occur
@@ -268,9 +207,6 @@ As an Teacher, I want to update an existing learning path's information (name, d
 - Network connection error khi submit form
 
 **MSG_15** - Hiển thị khi:
-- Database connection error
-- MinIO service unavailable khi upload image mới
-- Transaction rollback due to system error
 - Unexpected server errors
 
 **MSG_16** - Hiển thị khi:
@@ -300,12 +236,12 @@ As an Teacher, I want to update an existing learning path's information (name, d
 
 ## Technical Implementation Notes
 
-### Required API Endpoint
-- `PUT /teacher/learning-paths/:id` - Update existing learning path with optional image upload
+### Required API Endpoints
+- `PUT /api/learning-path/edit/:id` - Update existing learning path with optional image upload (multipart/form-data)
 
 ### API Request Contract
 ```javascript
-PUT /teacher/learning-paths/:id
+PUT /api/learning-path/edit/:id
 Content-Type: multipart/form-data
 Authorization: Bearer <JWT_TOKEN>
 
@@ -317,118 +253,11 @@ Form Data:
 - image (file, optional) - New image file max 5MB, formats: JPEG/PNG/GIF/WebP
 ```
 
-### API Response Contract
-```javascript
-// Success Response (200)
-{
-  "statusCode": 200,
-  "message": "Learning path updated successfully",
-  "data": {
-    "id": 123,
-    "name": "Updated Learning Path Name",
-    "description": "Updated description",
-    "difficulty_level": 3,
-    "is_active": 1,
-    "image": "https://minio-url/learning_paths/updated_image.jpg",
-    "updated_at": "2025-09-17T10:30:00.000Z"
-  }
-}
-
-// Validation Error Response (400)
-{
-  "statusCode": 400,
-  "message": "Learning path name must be unique",
-  "data": null
-}
-
-// Student Progress Error (400)
-{
-  "statusCode": 400,
-  "message": "Cannot deactivate: Students have already accessed this learning path",
-  "data": null
-}
-
-// Not Found Error (404)
-{
-  "statusCode": 404,
-  "message": "Learning path not found",
-  "data": null
-}
-
-// Server Error Response (500)
-{
-  "statusCode": 500,
-  "message": "Server error occurred while processing request",
-  "data": null
-}
-```
-
 ### Database Operations Required
-
-#### Transaction Pattern
-```javascript
-const updateLearningPath = async (req, res) => {
-  let transaction;
-  try {
-    const { id } = req.params;
-    
-    // Check if learning path exists
-    const existingPath = await db.LearningPath.findByPk(id);
-    if (!existingPath) {
-      return messageManager.notFound('learningpath', res);
-    }
-
-    // Check student progress if deactivating
-    if (req.body.is_active === 0 && existingPath.is_active === 1) {
-      const hasProgress = await checkStudentProgress(id);
-      if (hasProgress) {
-        return messageManager.validationFailed('learningpath', res, 
-          'Cannot deactivate: Students have already accessed this learning path');
-      }
-    }
-
-    transaction = await db.sequelize.transaction();
-    
-    // Handle image upload if provided
-    let imageUrl = existingPath.image;
-    if (req.files?.image) {
-      imageUrl = await uploadToMinIO(req.files.image[0], "learning_paths");
-    }
-
-    // Update learning path
-    await db.LearningPath.update({
-      name: req.body.name,
-      description: req.body.description,
-      difficulty_level: req.body.difficulty_level,
-      is_active: req.body.is_active,
-      image: imageUrl
-    }, {
-      where: { id },
-      transaction
-    });
-
-    await transaction.commit();
-    
-    const updatedPath = await db.LearningPath.findByPk(id);
-    return messageManager.updateSuccess('learningpath', updatedPath, res);
-    
-  } catch (error) {
-    if (transaction) await transaction.rollback();
-    console.error('Update learning path error:', error);
-    return messageManager.updateFailed('learningpath', res);
-  }
-};
-```
-
-#### Student Progress Check
-```javascript
-const checkStudentProgress = async (learningPathId) => {
-  const progress = await db.StudentReading.findOne({
-    where: { learning_path_id: learningPathId }
-  });
-  return !!progress;
-};
-```
+- Repository methods: `findById()`, `findByName()`, `update()`, `checkStudentProgress()`
+- Single UPDATE query với transaction support
+- Validate unique name excluding current record
+- Check student progress before deactivation (BR_5)
 
 ### Security & Performance Considerations
 - **File Upload Security**: Use FileValidation.helper.js to prevent malicious uploads
@@ -441,73 +270,131 @@ const checkStudentProgress = async (learningPathId) => {
 
 ## Diagram Components Overview
 
-### Sequence Diagram Components
-**Actors & Objects:**
-- Teacher (User)
-- Frontend UI (Update Learning Path Form)
-- API Gateway/Router
-- Auth Middleware
-- File Validation Middleware
-- Learning Path Controller
-- Learning Path Repository
-- Student Reading Model (for progress check)
-- MinIO Service
-- Database (MySQL/PostgreSQL)
-- Message Manager
+### Sequence Diagram (Mermaid)
+```mermaid
+sequenceDiagram
+  participant T as Teacher
+  participant FE as Frontend UI
+  participant API as API Gateway
+  participant Auth as Auth Middleware
+  participant FileVal as File Validation
+  participant C as LearningPathController
+  participant R as LearningPathRepository
+  participant MinIO as MinIO Service
+  participant DB as Database
 
-**Key Interactions:**
-1. Teacher → Frontend: Click "Edit Information" button
-2. Frontend → API: GET learning path data for pre-filling form
-3. Frontend → API: PUT /teacher/learning-paths/:id (multipart form data)
-4. API → Auth Middleware: Verify JWT & teacher role
-5. API → File Middleware: Validate image file (if provided)
-6. API → Controller: updateLearningPath()
-7. Controller → Repository: Check if learning path exists
-8. Controller → Student Reading: Check student progress (if deactivating)
-9. Controller → Database: Begin transaction
-10. Controller → MinIO: Upload new image (if provided)
-11. Controller → Repository: Update learning path record
-12. Controller → Database: Commit transaction
-13. Controller → Frontend: Success response with updated data
-14. Frontend → Teacher: Display success message & refresh list
+  Note over T,FE: Update learning path information
+  T->>FE: Click "Edit Information" button
+  FE->>API: GET learning path data for pre-filling form
+  API->>R: findById(id)
+  R->>DB: SELECT * FROM learning_paths WHERE id=?
+  DB-->>R: learning path data
+  R-->>API: existingPath
+  API-->>FE: 200 OK, learning path data
+  FE-->>T: Show pre-filled form
 
-### Class Diagram Components
-**Main Classes:**
-- **LearningPath** (Entity Model)
-  - Properties: id, name, description, difficulty_level, image_url, is_active, created_at, updated_at
-  - Methods: findByPk(), update(), validate()
-  - Constraints: unique name, difficulty 1-5
+  T->>FE: Fill fields and click "Save Changes"
+  FE->>API: PUT /api/learning-path/edit/:id (JWT, multipart form data)
+  API->>Auth: verifyToken(), checkTeacherRole()
+  Auth-->>API: OK / 401
+  
+  alt Image file provided
+    API->>FileVal: validateImageFile(req.files)
+    FileVal-->>API: OK / validation error
+  end
+  
+  API->>C: updateLearningPath(req, res)
+  C->>R: findById(id)
+  R->>DB: SELECT * FROM learning_paths WHERE id=?
+  DB-->>R: existingPath
+  R-->>C: existingPath (or null)
+  
+  alt Learning path exists
+    C->>C: sanitizeLearningPathData(req.body)
+    C->>C: validateLearningPathData(sanitizedData, true)
+    
+    alt Name changed
+      C->>R: findByName(sanitizedData.name)
+      R->>DB: SELECT * FROM learning_paths WHERE name=? AND id!=?
+      DB-->>R: duplicatePath (or null)
+      R-->>C: duplicatePath
+    end
+    
+    alt New image uploaded
+      C->>MinIO: uploadToMinIO(image, "learning-paths")
+      MinIO-->>C: imageUrl
+    end
+    
+    C->>R: update(id, updateData)
+    R->>DB: UPDATE learning_paths SET ... WHERE id=?
+    DB-->>R: updatedPath
+    R-->>C: updatedPath
+    C-->>API: 200 OK, success message
+    API-->>FE: 200 OK
+    FE-->>T: Show success toast, close dialog, refresh list
+  else Learning path not found
+    C-->>API: 404 Not Found
+    API-->>FE: 404
+    FE-->>T: Show error message
+  end
+```
 
-- **LearningPathController** (Controller Layer)
-  - Methods: updateLearningPath(req, res), checkStudentProgress()
-  - Dependencies: LearningPath Model, StudentReading Model, MinIO Service, MessageManager
-  - Validation: Input validation, business rule enforcement, student progress check
+### Class Diagram (Mermaid)
+```mermaid
+classDiagram
+  class LearningPath {
+    +BigInt id
+    +String name
+    +String description
+    +Integer difficulty_level
+    +String image
+    +Boolean is_active
+    +Date created_at
+    +Date updated_at
+  }
 
-- **StudentReading** (Entity Model)
-  - Properties: id, kid_student_id, learning_path_id, is_completed
-  - Methods: findOne()
-  - Purpose: Check student progress before deactivation
+  class LearningPathController {
+    +updateLearningPath(req, res)
+    +validateLearningPathData(data, isUpdate)
+  }
 
-- **FileValidation** (Helper Layer)
-  - Methods: validateKidReadingFiles(), checkFileSize(), checkMimeType()
-  - Rules: Max 5MB, allowed formats
+  class LearningPathRepository {
+    +findById(id)
+    +findByName(name)
+    +update(id, learningPathData)
+  }
 
-- **UploadToMinIO** (Helper Layer)
-  - Methods: uploadToMinIO(file, folder)
-  - Integration: MinIO service connection
+  class FileValidation {
+    +validateImageFile(files)
+    +validateFileType(file, allowedTypes, fieldName)
+    +validateFileSize(file, maxSizeMB, fieldName)
+  }
 
-- **AuthMiddleware** (Security Layer)
-  - Methods: verifyToken(), checkAdminRole()
-  - Security: JWT validation, role authorization
+  class UploadToMinIO {
+    +uploadToMinIO(file, folder)
+  }
 
-**Relationships:**
-- Controller uses LearningPath Model
-- Controller uses StudentReading Model for progress check
-- Controller uses FileValidation Helper
-- Controller uses UploadToMinIO Helper
-- Controller uses MessageManager
-- All requests go through AuthMiddleware
-- FileValidation validates before upload
+  class AuthMiddleware {
+    +verifyToken()
+    +checkTeacherRole()
+  }
+
+  class MessageManager {
+    +updateSuccess(entity, data, res)
+    +validationFailed(entity, res, message)
+    +notFound(entity, res, message)
+    +uploadFileFailed(entity, res)
+  }
+
+  LearningPathController --> LearningPathRepository : uses
+  LearningPathController --> FileValidation : uses
+  LearningPathController --> UploadToMinIO : uses
+  LearningPathController --> MessageManager : uses
+  LearningPathRepository --> LearningPath : manages
+  API --> AuthMiddleware : invokes
+```
+
+These Mermaid diagrams target mermaidchart.com/play — copy and paste the fenced code blocks into the editor there to render.
 
 ---
 
