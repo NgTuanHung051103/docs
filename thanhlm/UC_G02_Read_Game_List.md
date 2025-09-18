@@ -38,25 +38,21 @@ As an Admin, I want to view all games assigned to a specific learning path with 
 5. **The system displays a games table specifically filtered for the selected learning path with columns:**
    - Sequence Order (position in learning path)
    - Game Name (with link to edit game)
-   - Game Type (Puzzle, Memory, Quiz, Matching)
-   - Prerequisite Reading (which reading this game follows)
+   - Game Type (Puzzle, Memory, Quiz, Matching
    - Status (Active/Inactive)
    - Actions (Edit Game, Remove from Path)
 6. **The Admin can search for games within this learning path using the search box:**
    - Search by game name
-   - Search by prerequisite reading name
 7. **The system updates the table to display only games matching the search criteria within the current learning path.**
 8. **The Admin can filter games within the learning path by:**
    - Game Status (Active/Inactive) using dropdown
    - Game Type (Puzzle/Memory/Quiz/Matching) using dropdown
-   - Prerequisite Reading using dropdown (readings within this path)
 9. **The system applies the selected filters and updates the table accordingly.**
 10. **The Admin can sort games by clicking column headers:**
     - Sort by Sequence Order (ascending/descending)
     - Sort by Game Name (ascending/descending)
     - Sort by Game Type (ascending/descending)
     - Sort by Status (ascending/descending)
-    - Sort by Created Date (ascending/descending)
 11. **The system applies the sort order and refreshes the table.**
 12. **The Admin can navigate through pages if there are many games using pagination controls.**
 13. **The system displays the paginated results while maintaining the learning path context.**
@@ -65,35 +61,18 @@ As an Admin, I want to view all games assigned to a specific learning path with 
 
 ### 3. ALTERNATIVE SEQUENCE/FLOW
 
-**Alternative 1 - No Games in Learning Path:**
-- **Điều kiện kích hoạt:** Selected learning path contains no games
-- **Các bước thực hiện:**
-  - System displays empty state message "No games found in this learning path"
-  - System shows "Add Game" button to add games from existing readings
-  - System provides link to "Manage Learning Path Items" for full editing
-- **Kết quả:** Admin can navigate to add games or edit learning path structure
-
-**Alternative 2 - Return to Learning Path List:**
-- **Điều kiện kích hoạt:** Admin clicks "Back to Learning Paths" or breadcrumb navigation
-- **Các bước thực hiện:**
-  - System saves current filter/search states for potential return
-  - System navigates back to Learning Path Management list
-- **Kết quả:** Admin returns to learning path overview with context preserved
-
 ### 4. EXCEPTION SEQUENCE/FLOW
 
 **Steps 7, 9, 11: Data Retrieval Errors:**
 - **Network connection failure:** Display (MSG_21) "Connection error while loading games"
 - **Database query timeout:** Display (MSG_22) "Loading took too long. Please try again"
-- **Invalid learning path ID:** Display (MSG_23) "Learning path not found or access denied"
+- **Invalid learning path ID:** Display (MSG_23) "Learning path not found "
 
 **Steps 12-15: Pagination Errors:**
 - **Invalid page number:** Display (MSG_24) "Invalid page requested. Returning to first page"
-- **Page size limit exceeded:** Display (MSG_25) "Maximum display limit exceeded. Using default size"
 
 **Steps 6-8: Search/Filter Errors:**
 - **Invalid search parameters:** Display (MSG_26) "Search parameters invalid. Please try again"
-- **Filter combination returns no results:** Display informational message "No games match current filters"
 
 ## Mockup Design
 
@@ -113,12 +92,12 @@ As an Admin, I want to view all games assigned to a specific learning path with 
 │          └─────────────────────────┘  Reading: [All Readings ▼]                   │
 │                                                                                     │
 │ ┌─────┬──────────────────┬─────────┬────────────────────┬─────────┬──────────────┐ │
-│ │Seq#│ Game Name        │ Type    │ Prerequisite       │ Status  │ Actions      │ │
+│ │Seq#│ Game Name        │ Type    │      │ Status  │ Actions      │ │
 │ ├─────┼──────────────────┼─────────┼────────────────────┼─────────┼──────────────┤ │
-│ │ 2   │Animal Match Game │ Matching│ The Little Cat     │ ● Active │[Edit][Remove]│ │
-│ │ 4   │Cat Memory Game   │ Memory  │ The Little Cat     │ ○ Inactive│[Edit][Remove]│ │
-│ │ 7   │Family Quiz       │ Quiz    │ My Family Story    │ ● Active │[Edit][Remove]│ │
-│ │ 9   │Color Puzzle      │ Puzzle  │ Colors and Shapes  │ ● Active │[Edit][Remove]│ │
+│ │ 2   │Animal Match Game │ Matching│    │ ● Active │[Edit][Remove]│ │
+│ │ 4   │Cat Memory Game   │ Memory  │     │ ○ Inactive│[Edit][Remove]│ │
+│ │ 7   │Family Quiz       │ Quiz    │   │ ● Active │[Edit][Remove]│ │
+│ │ 9   │Color Puzzle      │ Puzzle  │   │ ● Active │[Edit][Remove]│ │
 │ └─────┴──────────────────┴─────────┴────────────────────┴─────────┴──────────────┘ │
 │                                                                                     │
 │ Showing 1-4 of 8 games  [10 per page ▼]     [« 1 2 »]                            │
@@ -147,7 +126,6 @@ As an Admin, I want to view all games assigned to a specific learning path with 
 - **Sequence Order Column:** Shows position of game in learning path sequence
 - **Game Name Column:** Clickable game names that link to game editing
 - **Type Column:** Visual indicators for game type with icons
-- **Prerequisite Reading Column:** Shows which reading this game follows
 - **Status Column:** Visual toggle indicators showing Active (●) or Inactive (○) status - display only, no interaction
 - **Actions Column:** Edit and Remove buttons for each game
 
