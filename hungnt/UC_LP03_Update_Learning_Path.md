@@ -285,16 +285,6 @@ sequenceDiagram
   participant MinIO as MinIO Service
   participant DB as Database
 
-  Note over T,FE: Update learning path information
-  T->>FE: Click "Edit Information" button
-  FE->>API: GET learning path data for pre-filling form
-  API->>R: findById(id)
-  R->>DB: SELECT * FROM learning_paths WHERE id=?
-  DB-->>R: learning path data
-  R-->>API: existingPath
-  API-->>FE: 200 OK, learning path data
-  FE-->>T: Show pre-filled form
-
   T->>FE: Fill fields and click "Save Changes"
   FE->>API: PUT /api/learning-path/edit/:id (multipart form data)
 
