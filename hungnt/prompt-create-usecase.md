@@ -48,10 +48,18 @@ Hãy tạo use case [UC_CODE]: [Use Case Name] cho nghiệp vụ [Business Funct
 **Ví dụ format bước:**
 1. **The Admin clicks the "Create New" button on the Learning Paths Management screen.**
 2. **The system opens a Create Learning Path dialog/form with the following fields:**
-   - Name (text input, required)
-   - Description (textarea, optional)
-   - Difficulty Level (dropdown: 1-5 stars, required)
-3. **The system validates the name input in real-time - shows (MSG_5) if empty, (MSG_7) if > 255 characters.**
+   - Name
+   - Description
+   - Difficulty Level
+3. **The Admin fill the fields and click on Save button.**
+4. **The system validates the form, if the error is found, it shows the respective error message.**
+  - If Name is empty, show (MSG_5)
+  - If Name exceeds 255 characters, show (MSG_7)
+  - If Difficulty Level is not selected, show (MSG_6)
+5. **If validation passes, the system attempts to save the new record to the database. **
+  - If action save is successful, show (MSG_1) and close the dialog
+  - If action error occurs, show (MSG_15)
+
 
 ### 3. ALTERNATIVE SEQUENCE/FLOW (nếu có)
 **Chỉ viết nếu thực sự có alternative flows. Format:**
@@ -83,12 +91,11 @@ Hãy tạo use case [UC_CODE]: [Use Case Name] cho nghiệp vụ [Business Funct
 
 **Ví dụ:**
 **Steps 3-4: Name Validation Errors:**
-- If name is empty during real-time validation: Display (MSG_5)
-- If name exceeds 255 characters: Display (MSG_7)
+- If name is empty during real-time validation: Display (MSG5)
 
 **Steps 11-14: System-level Errors:**
-- If network connection fails: Display (MSG_14)
-- If database error occurs: Display (MSG_15)
+- If network connection fails: Display (MSG14)
+- If the action save fails: Failed to add record. Display (MSG16)
 
 ## Mockup Design
 
@@ -157,7 +164,7 @@ Hãy tạo use case [UC_CODE]: [Use Case Name] cho nghiệp vụ [Business Funct
 - [Validation rule nào bị vi phạm]
 
 **Yêu cầu:**
-- Phải có ít nhất MSG_1 (success), trong trường hợp fetch data thì không cần message, ngoài ra hành động thêm, sửa, thì có message thành công hoặc thất bại, MSG_14 (connection error), MSG_15 (server error)
+- Phải có ít nhất MSG_1 (success), trong trường hợp fetch data thì không cần message, ngoài ra hành động thêm, sửa, thì có message thành công hoặc thất bại, MSG_14 (connection error), MSG16 (Failed to add record.), MSG15 (Record added successfully.),
 - Ghi rõ step nào trong Normal/Alternative/Exception flow message xuất hiện
 - Message text phải rõ ràng, user-friendly
 
@@ -188,41 +195,6 @@ Hãy tạo use case [UC_CODE]: [Use Case Name] cho nghiệp vụ [Business Funct
 
 ### 9. TECHNICAL IMPLEMENTATION NOTES
 **Bắt buộc bao gồm các phần:**
-
-#### Required API Endpoint
-- `[HTTP_METHOD] [ENDPOINT_PATH]` - [Mô tả chức năng]
-
-#### API Request Contract
-```javascript
-[HTTP_METHOD] [ENDPOINT_PATH]
-Content-Type: [application/json | multipart/form-data]
-Authorization: Bearer <JWT_TOKEN>
-
-// Request body format
-{
-  "field1": "type and description",
-  "field2": "type and description"
-}
-```
-
-#### API Response Contract  
-```javascript
-// Success Response ([HTTP_STATUS])
-{
-  "statusCode": [STATUS_CODE],
-  "message": "[Success message]",
-  "data": {
-    // Response data structure
-  }
-}
-
-// Error Response ([HTTP_STATUS])
-{
-  "statusCode": [ERROR_STATUS],
-  "message": "[Error message]", 
-  "data": null
-}
-```
 
 #### Database Operations Required
 **Liệt kê operations:**
