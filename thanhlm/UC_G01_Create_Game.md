@@ -32,24 +32,18 @@ As an Admin, I want to create a new game with name, type, and description for a 
    - Game Name
    - Game Type 
    - Description
-3. **The Admin fill the fields.**
-4. **The system validates the name input in real-time:**
-   - Shows (MSG_5) if field is empty
-   - Shows (MSG_7) if exceeds 255 characters
-   - Checks name uniqueness and shows (MSG_8) if duplicate exists
-5. **The Admin optionally enters a description for the game.**
-6. **The system validates the description in real-time:**
-   - Shows (MSG_9) if exceeds 1000 characters
-7. **The Admin clicks the "Save" button to create the game.**
-8. **The system validates all form data:**
+3. **The Admin fills in the required fields (name, type) and optionally enters a description.**
+4. **The Admin clicks the "Save" button to create the game.**
+5. **The system validates all form data and shows validation errors if any:**
     - Name: not empty, ≤255 chars, unique
     - Type: selected from valid options
     - Description: ≤1000 chars (if provided)
-9. **The system starts a database transaction and performs the following operations:**
+6. **If validation fails, system displays appropriate error messages and stops the save process.**
+7. **If validation passes, the system starts a database transaction and performs the following operations:**
     - Creates new Game record with is_active = false and prerequisite_reading_id set to the selected reading
     - Commits the transaction if all operations succeed
-10. **The system displays success message (MSG_1) and closes the dialog.**
-11. **The system refreshes the Learning Path Edit screen to show the newly created game in the correct position.**
+8. **The system displays success message (MSG_1) and closes the dialog.**
+9. **The system refreshes the Learning Path Edit screen to show the newly created game in the correct position.**
 
 ### 3. ALTERNATIVE SEQUENCE/FLOW
 
@@ -64,17 +58,17 @@ As an Admin, I want to create a new game with name, type, and description for a 
 
 ### 4. EXCEPTION SEQUENCE/FLOW
 
-**Steps 4, 6: Field Validation Errors:**
+**Steps 5-6: Validation Errors (After Save Click):**
 - **Name empty:** Display (MSG_5) "Game name cannot be empty"
 - **Name too long:** Display (MSG_7) "Game name cannot exceed 255 characters"  
 - **Name duplicate:** Display (MSG_8) "A game with this name already exists"
 - **Description too long:** Display (MSG_9) "Description cannot exceed 1000 characters"
 - **Type not selected:** Display (MSG_6) "Game type must be selected"
 
-**Steps 8-9: Business Logic Errors:**
+**Steps 7-8: Business Logic Errors:**
 - **Database constraint violation:** Display (MSG_11) "Game creation failed due to data conflicts"
 
-**Steps 9-10: System-level Errors:**
+**Steps 7-9: System-level Errors:**
 - **Network connection failure:** Display (MSG_14) "Connection error. Please try again"
 - **Database transaction failure:** Display (MSG_15) "Server error occurred. Game was not created"
 - **Transaction rollback:** Display (MSG_16) "Game creation failed and changes were undone"
@@ -117,7 +111,7 @@ As an Admin, I want to create a new game with name, type, and description for a 
 ### 6. UI ELEMENTS DESCRIPTION
 
 **Input Fields:**
-- **Game Name Field:** Required text input with real-time validation, max 255 characters
+- **Game Name Field:** Required text input, max 255 characters (validation on save)
 - **Game Type Dropdown:** Required selection from predefined options (Puzzle, Memory, Quiz, Matching)
 - **Description Field:** Optional textarea with character counter, max 1000 characters
 
@@ -127,7 +121,7 @@ As an Admin, I want to create a new game with name, type, and description for a 
 
 **Display Elements:**
 - **Prerequisite Reading Display:** Shows which reading this game will be linked to
-- **Validation Messages:** Real-time error messages below each field
+- **Validation Messages:** Error messages displayed after save attempt if validation fails
 - **Character Counters:** For name and description fields
 - **Information Note:** Explains that words can be added later through Edit Game
 
@@ -152,27 +146,26 @@ As an Admin, I want to create a new game with name, type, and description for a 
 
 **MSG_1** - Hiển thị khi:
 - Game creation transaction commits successfully
-- After step 14 in Normal Sequence/Flow
+- After step 8 in Normal Sequence/Flow
 - Appears as success toast notification
 
 **MSG_5** - Hiển thị khi:
-- User leaves name field empty during real-time validation (step 4)
-- User attempts to save form with empty name field (step 12)
+- User attempts to save form with empty name field (step 5-6)
 
 **MSG_6** - Hiển thị khi:
-- User attempts to save without selecting a game type (step 12)
+- User attempts to save without selecting a game type (step 5-6)
 
 **MSG_7** - Hiển thị khi:
-- User enters more than 255 characters in name field (step 4)
+- User attempts to save with name field exceeding 255 characters (step 5-6)
 
 **MSG_8** - Hiển thị khi:
-- User enters a name that already exists in database (step 4, 12)
+- User attempts to save with a name that already exists in database (step 5-6)
 
 **MSG_9** - Hiển thị khi:
-- User enters more than 1000 characters in description field (step 6)
+- User attempts to save with description exceeding 1000 characters (step 5-6)
 
 **MSG_14, MSG_15, MSG_16** - Hiển thị khi:
-- System-level errors occur during transaction (step 13-14)
+- System-level errors occur during transaction (step 7-9)
 
 ## Business Rules Applied to UC_G01
 
