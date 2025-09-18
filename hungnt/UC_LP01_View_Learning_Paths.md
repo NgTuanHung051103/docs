@@ -172,55 +172,93 @@ None
 
 ## Diagram Components Overview
 
-### Sequence Diagram Components
-**Actors & Objects:**
-- Teacher (User)
-- Frontend UI (Learning Path Management Screen)
-- API Gateway/Router
-- Auth Middleware
-- Learning Path Controller
-- Learning Path Repository
-- Database (MySQL/PostgreSQL)
-- Message Manager
+### Sequence Diagram (Mermaid)
+```mermaid
+sequenceDiagram
+  participant T as Teacher
+  participant FE as Frontend UI
+  participant API as API Gateway
+  participant Auth as Auth Middleware
+  participant C as LearningPathController
+  participant R as LearningPathRepository
+  participant DB as Database
 
-**Key Interactions:**
-1. Teacher → Frontend: Click "Learning Paths" menu
-2. Frontend → API: GET /api/learning-path/cms/all (with JWT token)
-3. API → Auth Middleware: Verify JWT & teacher role
-4. API → Controller: getAllLearningPaths()
-5. Controller → Repository: findAllWithPaging(offset, limit, searchTerm, is_active, difficulty_level)
-6. Repository → Database: SELECT with JOIN LearningPathItems
-7. Database → Repository: Return learning paths data
-8. Repository → Controller: Formatted results
-9. Controller → Frontend: JSON response with pagination
-10. Frontend → Teacher: Display table with data
+  Note over T,FE: View list of learning paths
+  T->>FE: Click "Learning Paths"
+  FE->>API: GET /api/learning-path/cms/all (JWT, query params)
+  API->>Auth: verifyToken(), checkTeacherRole()
+  Auth-->>API: OK / 401
+  API->>C: getAllLearningPaths(req)
+  C->>R: findAllWithPaging(offset, limit, searchTerm, is_active, difficulty_level)
+  R->>DB: SELECT learning_paths JOIN learning_path_items (WHERE is_active=1) LIMIT/OFFSET
+  DB-->>R: rows + count
+  R-->>C: formatted rows (active_items_count, has_student_progress)
+  C-->>API: JSON { records, total_record, total_page, ... }
+  API-->>FE: 200 OK, payload
+  FE-->>T: Render table, pagination
 
-### Class Diagram Components
-**Main Classes:**
-- **LearningPath** (Entity)
-  - Properties: id, name, description, difficulty_level, image_url, is_active, created_at, updated_at
-  - Methods: validate(), getActiveItemsCount()
+  Note over T,FE: Toggle status for a learning path
+  T->>FE: Click Activate/Deactivate for path id=1
+  FE->>API: PUT /api/learning-path/1/update-status (JWT, body: { is_active })
+  API->>Auth: verifyToken(), checkTeacherRole()
+  Auth-->>API: OK / 401
+  API->>C: toggleStatus(req)
+  C->>DB: SELECT LearningPath WHERE id=1
+  DB-->>C: learningPath (or null)
+  alt learningPath exists
+    C->>DB: UPDATE learning_paths SET is_active = ? WHERE id=1
+    DB-->>C: updated learningPath
+    C-->>API: 200 OK, updated resource
+    API-->>FE: 200 OK
+    FE-->>T: UI updated, toast success
+  else learningPath not found
+    C-->>API: 404 Not Found
+    API-->>FE: 404
+  end
+```
 
-- **LearningPathItem** (Entity)
-  - Properties: id, learning_path_id, item_id, item_type, sequence_number, is_active
-  - Relationship: BelongsTo LearningPath
+### Class Diagram (Mermaid)
+```mermaid
+classDiagram
+  class LearningPath {
+    +BigInt id
+    +String name
+    +String description
+    +Integer difficulty_level
+    +String image
+    +Boolean is_active
+    +Date created_at
+    +Date updated_at
+    +getActiveItemsCount()
+  }
 
-- **LearningPathController** (Controller Layer)
-  - Methods: getAllLearningPaths(req, res)
-  - Dependencies: LearningPathRepository, MessageManager
+  class LearningPathItem {
+    +BigInt id
+    +BigInt learning_path_id
+    +BigInt item_id
+    +String item_type
+    +Integer sequence_order
+    +Boolean is_active
+  }
 
-- **LearningPathRepository** (Data Access Layer)
-  - Methods: findAllWithPaging(filters, sort, pagination)
-  - Dependencies: Sequelize Models
+  class LearningPathController {
+    +getAllLearningPaths(req, res)
+    +toggleStatus(req, res)
+  }
 
-- **AuthMiddleware** (Security Layer)
-  - Methods: verifyToken(), checkAdminRole()
+  class LearningPathRepository {
+    +findAllWithPaging(offset, limit, searchTerm, isActive, difficultyLevel)
+  }
 
-- **MessageManager** (Utility Layer)
-  - Methods: success(), error(), notFound()
+  class AuthMiddleware {
+    +verifyToken()
+    +checkTeacherRole()
+  }
 
-**Relationships:**
-- LearningPath hasMany LearningPathItem
-- Controller uses Repository
-- Controller uses MessageManager
-- All requests go through AuthMiddleware
+  LearningPath "1" -- "*" LearningPathItem : hasMany
+  LearningPathController --> LearningPathRepository : uses
+  LearningPathController --> LearningPath : reads/updates
+  API --> AuthMiddleware : invokes
+```
+
+These Mermaid diagrams target mermaidchart.com/play — copy and paste the fenced code blocks into the editor there to render.
